@@ -21,11 +21,19 @@ os.makedirs("uploads", exist_ok=True)
 # Create tables
 Base.metadata.create_all(bind=engine)
 
+# Execute DB migrations to guarantee new columns exist in PostgreSQL
+try:
+    from app.database import run_db_migrations
+    run_db_migrations(engine)
+except Exception as e:
+    logger.warning(f"Failed to run schema migrations: {e}")
+
 # Seed database with initial admin and student accounts
 try:
     seed_data()
 except Exception as e:
     logger.warning(f"Could not auto-seed database: {e}")
+
 
 app = FastAPI(
     title="AlinLab Learning Platform API",

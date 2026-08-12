@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 # Load .env file automatically
 load_dotenv()
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 import psycopg2
 
@@ -62,22 +62,26 @@ def run_db_migrations(engine):
     Ensures columns lesson_type and gallery_urls exist in lessons table
     and video_url column is nullable in PostgreSQL / SQLite.
     """
-    try:
-        with engine.connect() as conn:
-            # PostgreSQL schema migration
-            conn.execute(text("ALTER TABLE lessons ADD COLUMN IF NOT EXISTS lesson_type VARCHAR DEFAULT 'video';"))
-            conn.execute(text("ALTER TABLE lessons ADD COLUMN IF NOT EXISTS gallery_urls TEXT;"))
-            conn.execute(text("ALTER TABLE lessons ALTER COLUMN video_url DROP NOT NULL;"))
-            conn.commit()
-            logger.info("Successfully executed database schema migrations for lessons table.")
-    except Exception as e:
-        logger.info(f"Db migration check notice: {e}")
+    statements = [
+        "ALTER TABLE lessons ADD COLUMN IF NOT EXISTS lesson_type VARCHAR DEFAULT 'video';",
+        "ALTER TABLE lessons ADD COLUMN IF NOT EXISTS gallery_urls TEXT;",
+        "ALTER TABLE lessons ALTER COLUMN video_url DROP NOT NULL;",
+        "UPDATE lessons SET lesson_type = 'video' WHERE lesson_type IS NULL;",
+        "UPDATE lessons SET gallery_urls = '' WHERE gallery_urls IS NULL;",
+        "UPDATE lessons SET video_url = '' WHERE video_url IS NULL;"
+    ]
+    for stmt in statements:
+        try:
+            with engine.connect() as conn:
+                conn.execute(text(stmt))
+                conn.commit()
+                logger.info(f"Migration executed: {stmt}")
+        except Exception as e:
+            logger.info(f"Migration notice for '{stmt}': {e}")
 
 def get_engine(url: str):
     if url.startswith("sqlite"):
-        eng = create_engine(url, connect_args={"check_same_thread": False})
-        run_db_migrations(eng)
-        return eng
+        return create_engine(url, connect_args={"check_same_thread": False})
 
     ensure_postgres_db_exists(url)
 
@@ -86,13 +90,10 @@ def get_engine(url: str):
         with engine.connect() as conn:
             pass
         logger.info(f"Successfully connected to PostgreSQL database at {url}")
-        run_db_migrations(engine)
         return engine
     except Exception as e:
         logger.warning(f"Could not connect to PostgreSQL ({e}). Falling back to SQLite.")
-        eng = create_engine("sqlite:///./alinlab.db", connect_args={"check_same_thread": False})
-        run_db_migrations(eng)
-        return eng
+        return create_engine("sqlite:///./alinlab.db", connect_args={"check_same_thread": False})
 
 
 engine = get_engine(DATABASE_URL)
