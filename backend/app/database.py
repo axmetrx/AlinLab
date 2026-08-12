@@ -20,6 +20,11 @@ POSTGRES_DB = os.getenv("POSTGRES_DB", "alinlab")
 DEFAULT_PG_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_PG_URL)
 
+# Render provides 'postgres://', SQLAlchemy 2.0 requires 'postgresql://'
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+
 def ensure_postgres_db_exists(url: str):
     if not url.startswith("postgresql"):
         return
