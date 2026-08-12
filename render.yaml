@@ -21,7 +21,6 @@ services:
   - type: web
     name: alinlab-frontend
     env: static
-    region: frankfurt
     plan: free
     buildCommand: "cd frontend && npm install && npm run build"
     staticPublishPath: "frontend/dist"
@@ -29,17 +28,10 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
-    envVars:
-      - key: VITE_API_URL
-        fromService:
-          type: web
-          name: alinlab-backend
-          property: url
 
 databases:
   # --- PostgreSQL Database ---
   - name: alinlab-db
     databaseName: alinlab
-    user: postgres
     plan: free
     region: frankfurt
