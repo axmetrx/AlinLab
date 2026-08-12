@@ -117,9 +117,14 @@ def delete_student(user_id: int, admin: User = Depends(get_admin_user), db: Sess
     if not user:
         raise HTTPException(status_code=404, detail="Ученик не найден")
 
+    # Cleanly delete related access records and notifications first
+    db.query(UserAccess).filter(UserAccess.user_id == user_id).delete(synchronize_session=False)
+    db.query(Notification).filter(Notification.user_id == user_id).delete(synchronize_session=False)
+    
     db.delete(user)
     db.commit()
     return {"message": "Ученик успешно удален"}
+
 
 
 # --- Lessons CRUD ---
