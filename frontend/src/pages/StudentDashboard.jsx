@@ -144,52 +144,61 @@ export const StudentDashboard = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {lessons.map((lesson, index) => (
-            <div
-              key={lesson.id}
-              onClick={() => setSelectedLesson(lesson)}
-              className="bg-cream-card border border-cream-border rounded-3xl overflow-hidden shadow-soft hover:shadow-xl transition-all duration-300 group cursor-pointer flex flex-col justify-between"
-            >
-              <div>
-                {/* Thumbnail Header */}
-                <div className="relative aspect-video bg-deep/5 overflow-hidden flex items-center justify-center">
-                  <div className="absolute inset-0 bg-gradient-to-t from-deep/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
-                  
-                  {/* Decorative Play Button */}
-                  <div className="w-14 h-14 rounded-full bg-white/90 text-rose-dark flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:bg-rose group-hover:text-white transition-all duration-300 relative z-10">
-                    <Play className="w-6 h-6 fill-current ml-0.5" />
+          {lessons.map((lesson, index) => {
+            const lType = lesson.lesson_type || 'video';
+
+            return (
+              <div
+                key={lesson.id}
+                onClick={() => setSelectedLesson(lesson)}
+                className="bg-cream-card border border-cream-border rounded-3xl overflow-hidden shadow-soft hover:shadow-xl transition-all duration-300 group cursor-pointer flex flex-col justify-between"
+              >
+                <div>
+                  {/* Thumbnail Header */}
+                  <div className="relative aspect-video bg-deep/5 overflow-hidden flex items-center justify-center">
+                    <div className="absolute inset-0 bg-gradient-to-t from-deep/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
+                    
+                    {/* Type-Specific Play/Open Icon */}
+                    <div className="w-14 h-14 rounded-full bg-white/90 text-rose-dark flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:bg-rose group-hover:text-white transition-all duration-300 relative z-10">
+                      {lType === 'video' && <Play className="w-6 h-6 fill-current ml-0.5" />}
+                      {lType === 'file' && <BookOpen className="w-6 h-6" />}
+                      {lType === 'gallery' && <Sparkles className="w-6 h-6" />}
+                    </div>
+
+                    <span className="absolute top-3 left-3 bg-cream/90 backdrop-blur-md text-deep text-xs px-3 py-1 rounded-full font-semibold">
+                      #{index + 1} • {lType === 'video' ? 'Видео' : lType === 'file' ? 'Файл' : 'Галерея'}
+                    </span>
                   </div>
 
-                  <span className="absolute top-3 left-3 bg-cream/90 backdrop-blur-md text-deep text-xs px-3 py-1 rounded-full font-semibold">
-                    Урок #{index + 1}
+                  {/* Content */}
+                  <div className="p-6">
+                    <h3 className="font-serif text-lg font-bold text-deep group-hover:text-rose transition-colors line-clamp-2 mb-2">
+                      {lesson.title}
+                    </h3>
+                    <p className="text-xs text-deep-muted line-clamp-3 leading-relaxed">
+                      {lesson.description || 'Описание к уроку отсутствует.'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Bottom Card Footer */}
+                <div className="px-6 py-4 border-t border-cream-border/60 bg-white/50 flex items-center justify-between">
+                  <span className="text-[11px] text-deep-muted flex items-center space-x-1 font-semibold">
+                    <Sparkles className="w-3.5 h-3.5 text-rose" />
+                    <span>
+                      {lType === 'video' ? 'Видеоурок' : lType === 'file' ? 'Файл / Документ' : 'Галерея фото'}
+                    </span>
+                  </span>
+                  <span className="text-xs font-semibold text-rose group-hover:translate-x-1 transition-transform flex items-center space-x-1">
+                    <span>{lType === 'video' ? 'Смотреть' : lType === 'file' ? 'Открыть' : 'Галерея'}</span>
+                    <Play className="w-3 h-3 fill-rose" />
                   </span>
                 </div>
 
-                {/* Content */}
-                <div className="p-6">
-                  <h3 className="font-serif text-lg font-bold text-deep group-hover:text-rose transition-colors line-clamp-2 mb-2">
-                    {lesson.title}
-                  </h3>
-                  <p className="text-xs text-deep-muted line-clamp-3 leading-relaxed">
-                    {lesson.description || 'Описание к уроку отсутствует.'}
-                  </p>
-                </div>
               </div>
+            );
+          })}
 
-              {/* Bottom Card Footer */}
-              <div className="px-6 py-4 border-t border-cream-border/60 bg-white/50 flex items-center justify-between">
-                <span className="text-[11px] text-deep-muted flex items-center space-x-1">
-                  <Sparkles className="w-3.5 h-3.5 text-rose" />
-                  <span>Видеоурок</span>
-                </span>
-                <span className="text-xs font-semibold text-rose group-hover:translate-x-1 transition-transform flex items-center space-x-1">
-                  <span>Смотреть</span>
-                  <Play className="w-3 h-3 fill-rose" />
-                </span>
-              </div>
-
-            </div>
-          ))}
         </div>
       )}
 

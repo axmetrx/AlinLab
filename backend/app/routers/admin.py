@@ -128,7 +128,6 @@ def delete_student(user_id: int, admin: User = Depends(get_admin_user), db: Sess
 
 
 # --- Lessons CRUD ---
-
 @router.get("/lessons", response_model=List[LessonResponse])
 def get_admin_lessons(admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
     return db.query(Lesson).order_by(Lesson.created_at.desc()).all()
@@ -139,7 +138,9 @@ def create_lesson(lesson_in: LessonCreate, admin: User = Depends(get_admin_user)
     lesson = Lesson(
         title=lesson_in.title,
         description=lesson_in.description,
-        video_url=lesson_in.video_url
+        video_url=lesson_in.video_url,
+        lesson_type=lesson_in.lesson_type or "video",
+        gallery_urls=lesson_in.gallery_urls
     )
     db.add(lesson)
     db.commit()
@@ -147,10 +148,11 @@ def create_lesson(lesson_in: LessonCreate, admin: User = Depends(get_admin_user)
 
     # Notify all active students about the new lesson
     students = db.query(User).filter(User.role == "student").all()
+    type_label = "новый материал" if lesson.lesson_type != "video" else "новый видеоурок"
     for student in students:
         note = Notification(
             user_id=student.id,
-            message=f"Вышел новый урок: «{lesson.title}»! Посмотрите его прямо сейчас в личном кабинете."
+            message=f"Вышел {type_label}: «{lesson.title}»! Посмотрите его прямо сейчас в личном кабинете."
         )
         db.add(note)
     db.commit()
@@ -170,10 +172,15 @@ def update_lesson(lesson_id: int, lesson_in: LessonUpdate, admin: User = Depends
         lesson.description = lesson_in.description
     if lesson_in.video_url is not None:
         lesson.video_url = lesson_in.video_url
+    if lesson_in.lesson_type is not None:
+        lesson.lesson_type = lesson_in.lesson_type
+    if lesson_in.gallery_urls is not None:
+        lesson.gallery_urls = lesson_in.gallery_urls
 
     db.commit()
     db.refresh(lesson)
     return lesson
+
 
 
 @router.delete("/lessons/{lesson_id}")

@@ -21,7 +21,10 @@ export const AdminDashboard = () => {
   const [lessonTitle, setLessonTitle] = useState('');
   const [lessonDesc, setLessonDesc] = useState('');
   const [lessonVideoUrl, setLessonVideoUrl] = useState('');
+  const [lessonType, setLessonType] = useState('video'); // 'video' | 'file' | 'gallery'
+  const [galleryUrls, setGalleryUrls] = useState('');
   const [lessonSubmitLoading, setLessonSubmitLoading] = useState(false);
+
 
   // Fetch Data
   const fetchStudents = async () => {
@@ -114,6 +117,8 @@ export const AdminDashboard = () => {
     setLessonTitle('');
     setLessonDesc('');
     setLessonVideoUrl('');
+    setLessonType('video');
+    setGalleryUrls('');
     setLessonModalOpen(true);
   };
 
@@ -121,7 +126,9 @@ export const AdminDashboard = () => {
     setEditingLesson(lesson);
     setLessonTitle(lesson.title);
     setLessonDesc(lesson.description || '');
-    setLessonVideoUrl(lesson.video_url);
+    setLessonVideoUrl(lesson.video_url || '');
+    setLessonType(lesson.lesson_type || 'video');
+    setGalleryUrls(lesson.gallery_urls || '');
     setLessonModalOpen(true);
   };
 
@@ -130,27 +137,28 @@ export const AdminDashboard = () => {
     setLessonSubmitLoading(true);
 
     try {
+      const payload = {
+        title: lessonTitle,
+        description: lessonDesc,
+        video_url: lessonVideoUrl,
+        lesson_type: lessonType,
+        gallery_urls: galleryUrls
+      };
+
       if (editingLesson) {
-        await api.put(`/admin/lessons/${editingLesson.id}`, {
-          title: lessonTitle,
-          description: lessonDesc,
-          video_url: lessonVideoUrl
-        });
+        await api.put(`/admin/lessons/${editingLesson.id}`, payload);
       } else {
-        await api.post('/admin/lessons', {
-          title: lessonTitle,
-          description: lessonDesc,
-          video_url: lessonVideoUrl
-        });
+        await api.post('/admin/lessons', payload);
       }
       setLessonModalOpen(false);
       fetchLessons();
     } catch (err) {
-      alert('Ошибка при сохранении урока: ' + (err.response?.data?.detail || err.message));
+      alert('Ошибка при сохранении материала: ' + (err.response?.data?.detail || err.message));
     } finally {
       setLessonSubmitLoading(false);
     }
   };
+
 
   const handleDeleteLesson = async (lessonId) => {
     if (!window.confirm('Вы уверены, что хотите удалить этот урок?')) return;
@@ -479,41 +487,104 @@ export const AdminDashboard = () => {
             </div>
 
             <form onSubmit={handleSaveLesson} className="space-y-4">
+              
+              {/* Material Type Selector */}
+              <div>
+                <label className="block text-xs font-semibold text-deep mb-2 uppercase tracking-wider">
+                  Тип учебного материала
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { type: 'video', label: '🎥 Видео' },
+                    { type: 'file', label: '📁 Файл' },
+                    { type: 'gallery', label: '🖼️ Галерея' },
+                  ].map((t) => (
+                    <button
+                      key={t.type}
+                      type="button"
+                      onClick={() => setLessonType(t.type)}
+                      className={`py-2.5 px-3 rounded-2xl text-xs font-semibold transition-all border ${
+                        lessonType === t.type
+                          ? 'bg-rose text-white border-rose shadow-rose'
+                          : 'bg-white text-deep border-cream-border hover:bg-cream-card'
+                      }`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
-                  Название урока
+                  Название материала
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="Урок 1. Заголовок..."
+                  placeholder="Введите заголовок..."
                   value={lessonTitle}
                   onChange={(e) => setLessonTitle(e.target.value)}
                   className="w-full px-4 py-3 rounded-2xl bg-white border border-cream-border text-deep text-sm focus:outline-none focus:border-rose"
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
-                  Ссылка на видео (YouTube / Vimeo / MP4)
-                </label>
-                <input
-                  type="url"
-                  required
-                  placeholder="https://www.youtube.com/watch?v=..."
-                  value={lessonVideoUrl}
-                  onChange={(e) => setLessonVideoUrl(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl bg-white border border-cream-border text-deep text-sm focus:outline-none focus:border-rose"
-                />
-              </div>
+              {/* Dynamic Link / File / Gallery Input */}
+              {lessonType === 'video' && (
+                <div>
+                  <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
+                    Ссылка на видео (YouTube / Vimeo / MP4)
+                  </label>
+                  <input
+                    type="url"
+                    required
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    value={lessonVideoUrl}
+                    onChange={(e) => setLessonVideoUrl(e.target.value)}
+                    className="w-full px-4 py-3 rounded-2xl bg-white border border-cream-border text-deep text-sm focus:outline-none focus:border-rose"
+                  />
+                </div>
+              )}
+
+              {lessonType === 'file' && (
+                <div>
+                  <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
+                    Ссылка на файл / документ для скачивания
+                  </label>
+                  <input
+                    type="url"
+                    required
+                    placeholder="https://example.com/document.pdf"
+                    value={lessonVideoUrl}
+                    onChange={(e) => setLessonVideoUrl(e.target.value)}
+                    className="w-full px-4 py-3 rounded-2xl bg-white border border-cream-border text-deep text-sm focus:outline-none focus:border-rose"
+                  />
+                </div>
+              )}
+
+              {lessonType === 'gallery' && (
+                <div>
+                  <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
+                    Ссылки на фото (по одной ссылке на строку)
+                  </label>
+                  <textarea
+                    rows="4"
+                    required
+                    placeholder="https://example.com/photo1.jpg&#10;https://example.com/photo2.jpg"
+                    value={galleryUrls}
+                    onChange={(e) => setGalleryUrls(e.target.value)}
+                    className="w-full px-4 py-3 rounded-2xl bg-white border border-cream-border text-deep text-sm focus:outline-none focus:border-rose"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
-                  Описание урока
+                  Описание и инструкции
                 </label>
                 <textarea
-                  rows="4"
-                  placeholder="Подробное описание и домашнее задание..."
+                  rows="3"
+                  placeholder="Подробное описание..."
                   value={lessonDesc}
                   onChange={(e) => setLessonDesc(e.target.value)}
                   className="w-full px-4 py-3 rounded-2xl bg-white border border-cream-border text-deep text-sm focus:outline-none focus:border-rose"
@@ -528,6 +599,7 @@ export const AdminDashboard = () => {
                 {lessonSubmitLoading ? 'Сохранение...' : editingLesson ? 'Сохранить изменения' : 'Опубликовать и оповестить учеников'}
               </button>
             </form>
+
           </div>
         </div>
       )}

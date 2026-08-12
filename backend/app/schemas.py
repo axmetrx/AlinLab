@@ -39,22 +39,29 @@ class PasswordChange(BaseModel):
 class LessonCreate(BaseModel):
     title: str
     description: Optional[str] = None
-    video_url: str
+    video_url: Optional[str] = None
+    lesson_type: str = "video"  # "video", "file", "gallery"
+    gallery_urls: Optional[str] = None
 
 class LessonUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     video_url: Optional[str] = None
+    lesson_type: Optional[str] = None
+    gallery_urls: Optional[str] = None
 
 class LessonResponse(BaseModel):
     id: int
     title: str
     description: Optional[str]
-    video_url: str
+    video_url: Optional[str]
+    lesson_type: str = "video"
+    gallery_urls: Optional[str] = None
     created_at: datetime
 
     class Config:
         from_attributes = True
+
 
 # --- Access Schemas ---
 class GrantAccessRequest(BaseModel):
