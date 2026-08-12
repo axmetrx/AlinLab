@@ -22,8 +22,41 @@ export const AdminDashboard = () => {
   const [lessonDesc, setLessonDesc] = useState('');
   const [lessonVideoUrl, setLessonVideoUrl] = useState('');
   const [lessonType, setLessonType] = useState('video'); // 'video' | 'file' | 'gallery'
+  const [sourceType, setSourceType] = useState('url'); // 'url' | 'upload'
   const [galleryUrls, setGalleryUrls] = useState('');
   const [lessonSubmitLoading, setLessonSubmitLoading] = useState(false);
+  const [fileUploading, setFileUploading] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState('');
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setFileUploading(true);
+    setUploadedFileName(file.name);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await api.post('/admin/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      const uploadedUrl = res.data.url;
+      
+      if (lessonType === 'gallery') {
+        setGalleryUrls(prev => (prev ? `${prev}\n${uploadedUrl}` : uploadedUrl));
+      } else {
+        setLessonVideoUrl(uploadedUrl);
+      }
+    } catch (err) {
+      alert('Ошибка при загрузке файла: ' + (err.response?.data?.detail || err.message));
+      setUploadedFileName('');
+    } finally {
+      setFileUploading(false);
+    }
+  };
+
 
 
   // Fetch Data
@@ -118,7 +151,9 @@ export const AdminDashboard = () => {
     setLessonDesc('');
     setLessonVideoUrl('');
     setLessonType('video');
+    setSourceType('url');
     setGalleryUrls('');
+    setUploadedFileName('');
     setLessonModalOpen(true);
   };
 
@@ -128,9 +163,12 @@ export const AdminDashboard = () => {
     setLessonDesc(lesson.description || '');
     setLessonVideoUrl(lesson.video_url || '');
     setLessonType(lesson.lesson_type || 'video');
+    setSourceType(lesson.video_url?.startsWith('/uploads') ? 'upload' : 'url');
     setGalleryUrls(lesson.gallery_urls || '');
+    setUploadedFileName(lesson.video_url?.startsWith('/uploads') ? 'Загруженный файл' : '');
     setLessonModalOpen(true);
   };
+
 
   const handleSaveLesson = async (e) => {
     e.preventDefault();
@@ -515,6 +553,39 @@ export const AdminDashboard = () => {
                 </div>
               </div>
 
+              {/* Source Type Selector: Link URL vs File Upload */}
+              {lessonType !== 'gallery' && (
+                <div>
+                  <label className="block text-xs font-semibold text-deep mb-1.5 uppercase tracking-wider">
+                    Способ добавления {lessonType === 'video' ? 'видео' : 'файла'}
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSourceType('url')}
+                      className={`py-2 px-3 rounded-xl text-xs font-semibold transition-all border ${
+                        sourceType === 'url'
+                          ? 'bg-deep text-white border-deep'
+                          : 'bg-white text-deep-muted border-cream-border hover:bg-cream-card'
+                      }`}
+                    >
+                      🔗 Указать ссылку (URL)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSourceType('upload')}
+                      className={`py-2 px-3 rounded-xl text-xs font-semibold transition-all border ${
+                        sourceType === 'upload'
+                          ? 'bg-deep text-white border-deep'
+                          : 'bg-white text-deep-muted border-cream-border hover:bg-cream-card'
+                      }`}
+                    >
+                      📤 Загрузить файл с ПК
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
                   Название материала
@@ -529,8 +600,8 @@ export const AdminDashboard = () => {
                 />
               </div>
 
-              {/* Dynamic Link / File / Gallery Input */}
-              {lessonType === 'video' && (
+              {/* URL Input */}
+              {sourceType === 'url' && lessonType === 'video' && (
                 <div>
                   <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
                     Ссылка на видео (YouTube / Vimeo / MP4)
@@ -546,10 +617,10 @@ export const AdminDashboard = () => {
                 </div>
               )}
 
-              {lessonType === 'file' && (
+              {sourceType === 'url' && lessonType === 'file' && (
                 <div>
                   <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
-                    Ссылка на файл / документ для скачивания
+                    Ссылка на документ / файл
                   </label>
                   <input
                     type="url"
@@ -562,21 +633,72 @@ export const AdminDashboard = () => {
                 </div>
               )}
 
-              {lessonType === 'gallery' && (
+              {/* Local File Upload Dropzone */}
+              {sourceType === 'upload' && (
                 <div>
                   <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
-                    Ссылки на фото (по одной ссылке на строку)
+                    Выберите файл с вашего компьютера
                   </label>
-                  <textarea
-                    rows="4"
-                    required
-                    placeholder="https://example.com/photo1.jpg&#10;https://example.com/photo2.jpg"
-                    value={galleryUrls}
-                    onChange={(e) => setGalleryUrls(e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl bg-white border border-cream-border text-deep text-sm focus:outline-none focus:border-rose"
-                  />
+                  <div className="relative border-2 border-dashed border-rose/40 hover:border-rose rounded-2xl p-4 text-center bg-rose-light/20 transition-all">
+                    <input
+                      type="file"
+                      accept={lessonType === 'video' ? 'video/*' : '*/*'}
+                      onChange={handleFileUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    <div className="space-y-1">
+                      <p className="text-xs font-bold text-rose-dark">
+                        {fileUploading ? '⏳ Идет загрузка файла на сервер...' : '📤 Нажмите или перетащите файл с ПК сюда'}
+                      </p>
+                      <p className="text-[11px] text-deep-muted">
+                        {lessonType === 'video' ? 'Форматы: MP4, WEBM, MOV, AVI' : 'Любые документы и файлы'}
+                      </p>
+                    </div>
+                  </div>
+                  {uploadedFileName && (
+                    <p className="text-xs text-emerald-600 font-semibold mt-1 flex items-center space-x-1">
+                      <span>✓ Загружен файл:</span>
+                      <strong className="underline truncate">{uploadedFileName}</strong>
+                    </p>
+                  )}
                 </div>
               )}
+
+              {lessonType === 'gallery' && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
+                      Загрузить фото с ПК или вставить ссылки
+                    </label>
+                    <div className="relative border-2 border-dashed border-rose/40 hover:border-rose rounded-2xl p-3 text-center bg-rose-light/20 transition-all mb-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      />
+                      <p className="text-xs font-bold text-rose-dark">
+                        {fileUploading ? '⏳ Загрузка изображения...' : '📷 Нажмите, чтобы добавить изображение с компьютера'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
+                      Список ссылок на фото (по одной на строку)
+                    </label>
+                    <textarea
+                      rows="3"
+                      required
+                      placeholder="https://example.com/photo1.jpg&#10;/uploads/image.jpg"
+                      value={galleryUrls}
+                      onChange={(e) => setGalleryUrls(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl bg-white border border-cream-border text-deep text-sm focus:outline-none focus:border-rose"
+                    />
+                  </div>
+                </div>
+              )}
+
 
               <div>
                 <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">

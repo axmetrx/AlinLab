@@ -1,6 +1,9 @@
 import datetime
+import os
+import uuid
+import shutil
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -9,6 +12,27 @@ from app.schemas import LessonCreate, LessonUpdate, LessonResponse, GrantAccessR
 from app.auth import get_admin_user
 
 router = APIRouter(prefix="/api/admin", tags=["Admin"])
+
+
+@router.post("/upload")
+def upload_file(file: UploadFile = File(...), admin: User = Depends(get_admin_user)):
+    """
+    Saves uploaded file from local computer to /uploads directory
+    and returns accessible URL path.
+    """
+    os.makedirs("uploads", exist_ok=True)
+    ext = os.path.splitext(file.filename)[1]
+    unique_filename = f"{uuid.uuid4().hex}{ext}"
+    target_path = os.path.join("uploads", unique_filename)
+
+    with open(target_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return {
+        "url": f"/uploads/{unique_filename}",
+        "filename": file.filename
+    }
+
 
 @router.get("/users")
 def get_students(admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
