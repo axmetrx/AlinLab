@@ -97,6 +97,17 @@ export const AdminDashboard = () => {
     }
   };
 
+  const handleDeleteStudent = async (studentId, studentName) => {
+    if (!window.confirm(`Вы уверены, что хотите полностью удалить ученика «${studentName}»? Это действие необратимо.`)) return;
+    try {
+      await api.delete(`/admin/users/${studentId}`);
+      fetchStudents();
+    } catch (err) {
+      alert('Ошибка при удалении ученика: ' + (err.response?.data?.detail || err.message));
+    }
+  };
+
+
   // --- LESSONS CRUD ---
   const handleOpenCreateLesson = () => {
     setEditingLesson(null);
@@ -272,11 +283,19 @@ export const AdminDashboard = () => {
                               <button
                                 onClick={() => handleRevokeAccess(st.id)}
                                 title="Отменить доступ"
-                                className="p-1.5 rounded-xl text-red-500 hover:bg-red-50 transition-colors"
+                                className="p-1.5 rounded-xl text-amber-600 hover:bg-amber-50 transition-colors"
                               >
                                 <XCircle className="w-4 h-4" />
                               </button>
                             )}
+
+                            <button
+                              onClick={() => handleDeleteStudent(st.id, st.full_name)}
+                              title="Удалить ученика"
+                              className="p-1.5 rounded-xl text-red-500 hover:bg-red-50 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
                         </td>
                       </tr>

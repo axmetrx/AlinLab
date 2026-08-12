@@ -111,7 +111,19 @@ def revoke_access(user_id: int, admin: User = Depends(get_admin_user), db: Sessi
     return {"message": "Доступ отменен"}
 
 
+@router.delete("/users/{user_id}")
+def delete_student(user_id: int, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id, User.role == "student").first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Ученик не найден")
+
+    db.delete(user)
+    db.commit()
+    return {"message": "Ученик успешно удален"}
+
+
 # --- Lessons CRUD ---
+
 @router.get("/lessons", response_model=List[LessonResponse])
 def get_admin_lessons(admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
     return db.query(Lesson).order_by(Lesson.created_at.desc()).all()
