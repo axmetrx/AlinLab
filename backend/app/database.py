@@ -60,12 +60,14 @@ def ensure_postgres_db_exists(url: str):
 def run_db_migrations(engine):
     """
     Ensures columns lesson_type and gallery_urls exist in lessons table
-    and video_url column is nullable in PostgreSQL / SQLite.
+    and video_url column is of TYPE TEXT in PostgreSQL.
     """
     statements = [
         "ALTER TABLE lessons ADD COLUMN IF NOT EXISTS lesson_type VARCHAR DEFAULT 'video';",
         "ALTER TABLE lessons ADD COLUMN IF NOT EXISTS gallery_urls TEXT;",
         "ALTER TABLE lessons ALTER COLUMN video_url DROP NOT NULL;",
+        "ALTER TABLE lessons ALTER COLUMN video_url TYPE TEXT;",
+        "ALTER TABLE lessons ALTER COLUMN gallery_urls TYPE TEXT;",
         "UPDATE lessons SET lesson_type = 'video' WHERE lesson_type IS NULL;",
         "UPDATE lessons SET gallery_urls = '' WHERE gallery_urls IS NULL;",
         "UPDATE lessons SET video_url = '' WHERE video_url IS NULL;"
@@ -78,6 +80,7 @@ def run_db_migrations(engine):
                 logger.info(f"Migration executed: {stmt}")
         except Exception as e:
             logger.info(f"Migration notice for '{stmt}': {e}")
+
 
 def get_engine(url: str):
     if url.startswith("sqlite"):

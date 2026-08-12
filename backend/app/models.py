@@ -23,10 +23,11 @@ class Lesson(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
-    video_url = Column(String, nullable=True)
+    video_url = Column(Text, nullable=True)  # Text type for long video URLs and DataURLs
     lesson_type = Column(String, default="video", nullable=False)  # "video", "file", "gallery"
-    gallery_urls = Column(Text, nullable=True)  # JSON or newline-separated list of image/file URLs
+    gallery_urls = Column(Text, nullable=True)  # Text type for long image URLs and DataURLs
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
 
 
 

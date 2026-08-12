@@ -4,9 +4,11 @@ import logging
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import staticfiles
+
 
 from app.database import engine, Base
 from app.routers import auth, student, admin
@@ -34,17 +36,26 @@ try:
 except Exception as e:
     logger.warning(f"Could not auto-seed database: {e}")
 
-
 app = FastAPI(
     title="AlinLab Learning Platform API",
     description="Backend API for AlinLab Online Learning Platform",
     version="1.0.0"
 )
 
+# Global exception handler ensuring CORS headers on all errors
+@app.exception_handler(Exception)
+def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Global exception handling request {request.url}: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc)},
+        headers={"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*", "Access-Control-Allow-Methods": "*"}
+    )
+
 # Mount static uploads directory for uploaded local files
 app.mount("/uploads", staticfiles.StaticFiles(directory="uploads"), name="uploads")
 
-# Enable CORS for frontend development
+# Enable CORS for frontend development and production origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -52,6 +63,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 # Include Routers
