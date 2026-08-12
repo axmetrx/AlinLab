@@ -1,0 +1,518 @@
+import React, { useState, useEffect } from 'react';
+import api from '../api/client';
+import { Shield, Users, BookOpen, Plus, Calendar, Clock, CheckCircle, XCircle, Trash2, Edit3, Sparkles, X, Link, Play } from 'lucide-react';
+
+export const AdminDashboard = () => {
+  const [activeSubTab, setActiveSubTab] = useState('students'); // 'students' | 'lessons'
+  
+  // Students & Access State
+  const [students, setStudents] = useState([]);
+  const [studentsLoading, setStudentsLoading] = useState(true);
+  const [accessModalStudent, setAccessModalStudent] = useState(null);
+  const [selectedDuration, setSelectedDuration] = useState('30'); // '7', '30', '90', '365', 'unlimited', 'custom'
+  const [customDays, setCustomDays] = useState('14');
+  const [accessLoading, setAccessLoading] = useState(false);
+
+  // Lessons State
+  const [lessons, setLessons] = useState([]);
+  const [lessonsLoading, setLessonsLoading] = useState(true);
+  const [lessonModalOpen, setLessonModalOpen] = useState(false);
+  const [editingLesson, setEditingLesson] = useState(null);
+  const [lessonTitle, setLessonTitle] = useState('');
+  const [lessonDesc, setLessonDesc] = useState('');
+  const [lessonVideoUrl, setLessonVideoUrl] = useState('');
+  const [lessonSubmitLoading, setLessonSubmitLoading] = useState(false);
+
+  // Fetch Data
+  const fetchStudents = async () => {
+    try {
+      const res = await api.get('/admin/users');
+      setStudents(res.data);
+    } catch (err) {
+      console.error('Failed to fetch students:', err);
+    } finally {
+      setStudentsLoading(false);
+    }
+  };
+
+  const fetchLessons = async () => {
+    try {
+      const res = await api.get('/admin/lessons');
+      setLessons(res.data);
+    } catch (err) {
+      console.error('Failed to fetch lessons:', err);
+    } finally {
+      setLessonsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStudents();
+    fetchLessons();
+  }, []);
+
+  // --- GRANT / MODIFY ACCESS ---
+  const handleOpenAccessModal = (student) => {
+    setAccessModalStudent(student);
+    setSelectedDuration('30');
+    setCustomDays('14');
+  };
+
+  const handleSaveAccess = async (e) => {
+    e.preventDefault();
+    if (!accessModalStudent) return;
+    setAccessLoading(true);
+
+    let days = null;
+    if (selectedDuration === 'unlimited') {
+      days = null;
+    } else if (selectedDuration === 'custom') {
+      days = parseInt(customDays, 10) || 30;
+    } else {
+      days = parseInt(selectedDuration, 10);
+    }
+
+    try {
+      await api.post('/admin/access', {
+        user_id: accessModalStudent.id,
+        duration_days: days,
+        is_active: true
+      });
+      setAccessModalStudent(null);
+      fetchStudents();
+    } catch (err) {
+      alert('Ошибка при выдаче доступа: ' + (err.response?.data?.detail || err.message));
+    } finally {
+      setAccessLoading(false);
+    }
+  };
+
+  const handleRevokeAccess = async (studentId) => {
+    if (!window.confirm('Вы действительно хотите отменить доступ для этого ученика?')) return;
+    try {
+      await api.post(`/admin/access/revoke/${studentId}`);
+      fetchStudents();
+    } catch (err) {
+      alert('Ошибка при отмене доступа');
+    }
+  };
+
+  // --- LESSONS CRUD ---
+  const handleOpenCreateLesson = () => {
+    setEditingLesson(null);
+    setLessonTitle('');
+    setLessonDesc('');
+    setLessonVideoUrl('');
+    setLessonModalOpen(true);
+  };
+
+  const handleOpenEditLesson = (lesson) => {
+    setEditingLesson(lesson);
+    setLessonTitle(lesson.title);
+    setLessonDesc(lesson.description || '');
+    setLessonVideoUrl(lesson.video_url);
+    setLessonModalOpen(true);
+  };
+
+  const handleSaveLesson = async (e) => {
+    e.preventDefault();
+    setLessonSubmitLoading(true);
+
+    try {
+      if (editingLesson) {
+        await api.put(`/admin/lessons/${editingLesson.id}`, {
+          title: lessonTitle,
+          description: lessonDesc,
+          video_url: lessonVideoUrl
+        });
+      } else {
+        await api.post('/admin/lessons', {
+          title: lessonTitle,
+          description: lessonDesc,
+          video_url: lessonVideoUrl
+        });
+      }
+      setLessonModalOpen(false);
+      fetchLessons();
+    } catch (err) {
+      alert('Ошибка при сохранении урока: ' + (err.response?.data?.detail || err.message));
+    } finally {
+      setLessonSubmitLoading(false);
+    }
+  };
+
+  const handleDeleteLesson = async (lessonId) => {
+    if (!window.confirm('Вы уверены, что хотите удалить этот урок?')) return;
+    try {
+      await api.delete(`/admin/lessons/${lessonId}`);
+      fetchLessons();
+    } catch (err) {
+      alert('Ошибка при удалении урока');
+    }
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 pb-24 md:pb-12 animate-fade-in space-y-8">
+      
+      {/* Admin Header */}
+      <div className="bg-cream-card border border-cream-border rounded-3xl p-6 sm:p-8 shadow-soft flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center space-x-4">
+          <div className="w-14 h-14 rounded-3xl bg-gradient-to-tr from-rose to-rose-hover text-white flex items-center justify-center shadow-rose">
+            <Shield className="w-7 h-7" />
+          </div>
+          <div>
+            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-deep">
+              Панель Администратора
+            </h1>
+            <p className="text-xs text-deep-muted mt-0.5">Управление учениками, доступом и учебными видеоуроками</p>
+          </div>
+        </div>
+
+        {/* Tab Switchers */}
+        <div className="flex items-center space-x-2 bg-white/80 p-1.5 rounded-2xl border border-cream-border w-full sm:w-auto">
+          <button
+            onClick={() => setActiveSubTab('students')}
+            className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-center space-x-2 ${
+              activeSubTab === 'students' ? 'bg-rose text-white shadow-rose' : 'text-deep-muted hover:text-deep'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            <span>Ученики ({students.length})</span>
+          </button>
+          
+          <button
+            onClick={() => setActiveSubTab('lessons')}
+            className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-center space-x-2 ${
+              activeSubTab === 'lessons' ? 'bg-rose text-white shadow-rose' : 'text-deep-muted hover:text-deep'
+            }`}
+          >
+            <BookOpen className="w-4 h-4" />
+            <span>Уроки ({lessons.length})</span>
+          </button>
+        </div>
+      </div>
+
+      {/* SUB-TAB 1: STUDENTS & ACCESS */}
+      {activeSubTab === 'students' && (
+        <div className="bg-white border border-cream-border rounded-3xl overflow-hidden shadow-soft">
+          
+          <div className="p-6 border-b border-cream-border bg-cream-card/50 flex items-center justify-between">
+            <div>
+              <h2 className="font-serif text-xl font-bold text-deep">
+                Список зарегистрированных учеников
+              </h2>
+              <p className="text-xs text-deep-muted">Выдавайте и продлевайте доступ к учебной программе в клик</p>
+            </div>
+          </div>
+
+          {studentsLoading ? (
+            <div className="p-12 text-center text-sm text-deep-muted">Загрузка списка учеников...</div>
+          ) : students.length === 0 ? (
+            <div className="p-12 text-center text-sm text-deep-muted">Зарегистрированных учеников пока нет.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-deep">
+                <thead className="bg-cream-dark/50 text-[11px] font-bold uppercase tracking-wider text-deep-muted border-b border-cream-border">
+                  <tr>
+                    <th className="py-4 px-6">Ученик</th>
+                    <th className="py-4 px-6">Дата регистрации</th>
+                    <th className="py-4 px-6">Текущий доступ</th>
+                    <th className="py-4 px-6 text-right">Действия</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-cream-border">
+                  {students.map((st) => {
+                    const access = st.access;
+                    const isActive = access?.is_active;
+                    const isUnlimited = access?.is_unlimited;
+                    const days = access?.days_remaining;
+
+                    return (
+                      <tr key={st.id} className="hover:bg-cream-card/30 transition-colors">
+                        <td className="py-4 px-6">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-9 h-9 rounded-full bg-rose-light text-rose-dark font-semibold text-xs flex items-center justify-center">
+                              {st.full_name?.charAt(0) || 'U'}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-deep">{st.full_name}</p>
+                              <p className="text-xs text-deep-muted">{st.email}</p>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="py-4 px-6 text-xs text-deep-muted">
+                          {new Date(st.created_at).toLocaleDateString('ru-RU')}
+                        </td>
+
+                        <td className="py-4 px-6">
+                          {isActive ? (
+                            <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
+                              <CheckCircle className="w-3.5 h-3.5" />
+                              <span>{isUnlimited ? 'Бессрочно' : `${days} дн.`}</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold border border-amber-200">
+                              <XCircle className="w-3.5 h-3.5" />
+                              <span>Закрыт</span>
+                            </span>
+                          )}
+                        </td>
+
+                        <td className="py-4 px-6 text-right">
+                          <div className="flex items-center justify-end space-x-2">
+                            <button
+                              onClick={() => handleOpenAccessModal(st)}
+                              className="px-3.5 py-1.5 rounded-xl bg-rose text-white text-xs font-semibold hover:bg-rose-hover transition-colors shadow-sm"
+                            >
+                              {isActive ? 'Продлить / Изменить' : 'Выдать доступ'}
+                            </button>
+
+                            {isActive && (
+                              <button
+                                onClick={() => handleRevokeAccess(st.id)}
+                                title="Отменить доступ"
+                                className="p-1.5 rounded-xl text-red-500 hover:bg-red-50 transition-colors"
+                              >
+                                <XCircle className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+        </div>
+      )}
+
+      {/* SUB-TAB 2: LESSONS MANAGEMENT */}
+      {activeSubTab === 'lessons' && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-serif text-2xl font-bold text-deep">
+                Каталог Видеоуроков
+              </h2>
+              <p className="text-xs text-deep-muted">Всего материалов: {lessons.length}</p>
+            </div>
+            <button
+              onClick={handleOpenCreateLesson}
+              className="px-5 py-3 rounded-2xl bg-gradient-to-r from-rose to-rose-hover text-white text-xs font-semibold shadow-rose hover:shadow-lg transition-all flex items-center space-x-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Добавить видеоурок</span>
+            </button>
+          </div>
+
+          {lessonsLoading ? (
+            <div className="p-12 text-center text-sm text-deep-muted bg-white rounded-3xl">Загрузка уроков...</div>
+          ) : lessons.length === 0 ? (
+            <div className="p-12 text-center text-sm text-deep-muted bg-white rounded-3xl border border-cream-border">Уроков пока нет. Создайте первый урок прямо сейчас!</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {lessons.map((lesson) => (
+                <div key={lesson.id} className="bg-white border border-cream-border rounded-3xl p-6 shadow-soft flex flex-col justify-between space-y-4">
+                  <div>
+                    <div className="flex items-start justify-between">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-rose-dark bg-rose-light px-2.5 py-1 rounded-full mb-3 inline-block">
+                        Урок #{lesson.id}
+                      </span>
+                      <div className="flex items-center space-x-1">
+                        <button
+                          onClick={() => handleOpenEditLesson(lesson)}
+                          className="p-2 rounded-xl text-deep-muted hover:text-rose hover:bg-rose-light transition-colors"
+                          title="Редактировать"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteLesson(lesson.id)}
+                          className="p-2 rounded-xl text-deep-muted hover:text-red-500 hover:bg-red-50 transition-colors"
+                          title="Удалить"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <h3 className="font-serif text-lg font-bold text-deep mb-2">
+                      {lesson.title}
+                    </h3>
+                    <p className="text-xs text-deep-muted line-clamp-3 leading-relaxed mb-3">
+                      {lesson.description || 'Описание отсутствует.'}
+                    </p>
+                  </div>
+
+                  <div className="pt-3 border-t border-cream-border flex items-center justify-between text-xs text-deep-muted">
+                    <span className="truncate max-w-[240px] flex items-center space-x-1">
+                      <Link className="w-3.5 h-3.5 text-rose flex-shrink-0" />
+                      <span className="truncate">{lesson.video_url}</span>
+                    </span>
+                    <span>{new Date(lesson.created_at).toLocaleDateString('ru-RU')}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* --- GRANT ACCESS MODAL --- */}
+      {accessModalStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-deep/60 backdrop-blur-md p-4 animate-fade-in">
+          <div className="bg-cream rounded-3xl max-w-md w-full p-6 shadow-2xl border border-cream-border space-y-6">
+            <div className="flex items-center justify-between border-b border-cream-border pb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-2xl bg-rose-light text-rose-dark flex items-center justify-center">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-serif text-lg font-bold text-deep">Выдать доступ</h3>
+                  <p className="text-xs text-deep-muted">{accessModalStudent.full_name}</p>
+                </div>
+              </div>
+              <button onClick={() => setAccessModalStudent(null)} className="p-1 rounded-full text-deep-muted hover:text-deep">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveAccess} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-deep mb-2 uppercase tracking-wider">
+                  Выберите срок действия
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: '7 Дней', val: '7' },
+                    { label: '30 Дней', val: '30' },
+                    { label: '90 Дней', val: '90' },
+                    { label: '365 Дней', val: '365' },
+                    { label: 'Бессрочно', val: 'unlimited' },
+                    { label: 'Свой срок', val: 'custom' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.val}
+                      type="button"
+                      onClick={() => setSelectedDuration(opt.val)}
+                      className={`py-3 px-3 rounded-2xl text-xs font-semibold transition-all border ${
+                        selectedDuration === opt.val
+                          ? 'bg-rose text-white border-rose shadow-rose'
+                          : 'bg-white text-deep border-cream-border hover:bg-cream-card'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {selectedDuration === 'custom' && (
+                <div>
+                  <label className="block text-xs font-semibold text-deep mb-1">
+                    Укажите количество дней:
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={customDays}
+                    onChange={(e) => setCustomDays(e.target.value)}
+                    className="w-full px-4 py-3 rounded-2xl bg-white border border-cream-border text-deep text-sm focus:outline-none focus:border-rose"
+                  />
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={accessLoading}
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose to-rose-hover text-white font-semibold text-sm shadow-rose hover:shadow-lg transition-all disabled:opacity-50 mt-2"
+              >
+                {accessLoading ? 'Сохранение...' : 'Подтвердить и открыть доступ'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- CREATE / EDIT LESSON MODAL --- */}
+      {lessonModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-deep/60 backdrop-blur-md p-4 animate-fade-in">
+          <div className="bg-cream rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-cream-border space-y-6">
+            <div className="flex items-center justify-between border-b border-cream-border pb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-2xl bg-rose-light text-rose-dark flex items-center justify-center">
+                  <Play className="w-5 h-5 fill-rose-dark" />
+                </div>
+                <div>
+                  <h3 className="font-serif text-lg font-bold text-deep">
+                    {editingLesson ? 'Редактировать видеоурок' : 'Добавить новый видеоурок'}
+                  </h3>
+                  <p className="text-xs text-deep-muted">Материал станет доступен ученикам с активным доступом</p>
+                </div>
+              </div>
+              <button onClick={() => setLessonModalOpen(false)} className="p-1 rounded-full text-deep-muted hover:text-deep">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveLesson} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
+                  Название урока
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Урок 1. Заголовок..."
+                  value={lessonTitle}
+                  onChange={(e) => setLessonTitle(e.target.value)}
+                  className="w-full px-4 py-3 rounded-2xl bg-white border border-cream-border text-deep text-sm focus:outline-none focus:border-rose"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
+                  Ссылка на видео (YouTube / Vimeo / MP4)
+                </label>
+                <input
+                  type="url"
+                  required
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  value={lessonVideoUrl}
+                  onChange={(e) => setLessonVideoUrl(e.target.value)}
+                  className="w-full px-4 py-3 rounded-2xl bg-white border border-cream-border text-deep text-sm focus:outline-none focus:border-rose"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
+                  Описание урока
+                </label>
+                <textarea
+                  rows="4"
+                  placeholder="Подробное описание и домашнее задание..."
+                  value={lessonDesc}
+                  onChange={(e) => setLessonDesc(e.target.value)}
+                  className="w-full px-4 py-3 rounded-2xl bg-white border border-cream-border text-deep text-sm focus:outline-none focus:border-rose"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={lessonSubmitLoading}
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose to-rose-hover text-white font-semibold text-sm shadow-rose hover:shadow-lg transition-all disabled:opacity-50 mt-2"
+              >
+                {lessonSubmitLoading ? 'Сохранение...' : editingLesson ? 'Сохранить изменения' : 'Опубликовать и оповестить учеников'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+};
