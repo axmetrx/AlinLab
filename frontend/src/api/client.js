@@ -1,9 +1,11 @@
 import axios from 'axios';
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
-});
+// Default to direct Render backend URL if VITE_API_URL is not set
+const DEFAULT_BACKEND_URL = 'https://alinlab-backend.onrender.com/api';
 
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || DEFAULT_BACKEND_URL,
+});
 
 // Interceptor to attach Authorization JWT token automatically
 api.interceptors.request.use(
@@ -24,7 +26,6 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       localStorage.removeItem('alinlab_token');
       localStorage.removeItem('alinlab_user');
-      // Broadcast auth error event if needed
       window.dispatchEvent(new Event('auth:unauthorized'));
     }
     return Promise.reject(error);

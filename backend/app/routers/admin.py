@@ -154,7 +154,18 @@ def delete_student(user_id: int, admin: User = Depends(get_admin_user), db: Sess
 # --- Lessons CRUD ---
 @router.get("/lessons", response_model=List[LessonResponse])
 def get_admin_lessons(admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
-    return db.query(Lesson).order_by(Lesson.created_at.desc()).all()
+    lessons = db.query(Lesson).order_by(Lesson.created_at.desc()).all()
+    for l in lessons:
+        if getattr(l, 'lesson_type', None) is None:
+            l.lesson_type = "video"
+        if getattr(l, 'video_url', None) is None:
+            l.video_url = ""
+        if getattr(l, 'description', None) is None:
+            l.description = ""
+        if getattr(l, 'gallery_urls', None) is None:
+            l.gallery_urls = ""
+    return lessons
+
 
 
 @router.post("/lessons", response_model=LessonResponse)

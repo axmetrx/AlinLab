@@ -40,7 +40,25 @@ def get_dashboard(current_user: User = Depends(get_current_user), db: Session = 
     
     lessons = []
     if is_active or current_user.role == "admin":
-        lessons = db.query(Lesson).order_by(Lesson.created_at.desc()).all()
+        lessons_raw = db.query(Lesson).order_by(Lesson.created_at.desc()).all()
+        for l in lessons_raw:
+            if getattr(l, 'lesson_type', None) is None:
+                l.lesson_type = "video"
+            if getattr(l, 'video_url', None) is None:
+                l.video_url = ""
+            if getattr(l, 'description', None) is None:
+                l.description = ""
+            if getattr(l, 'gallery_urls', None) is None:
+                l.gallery_urls = ""
+            lessons.append({
+                "id": l.id,
+                "title": l.title,
+                "description": l.description or "",
+                "video_url": l.video_url or "",
+                "lesson_type": l.lesson_type or "video",
+                "gallery_urls": l.gallery_urls or "",
+                "created_at": l.created_at.isoformat() if l.created_at else None
+            })
     
     return {
         "access": {
@@ -51,6 +69,7 @@ def get_dashboard(current_user: User = Depends(get_current_user), db: Session = 
         },
         "lessons": lessons
     }
+
 
 
 @router.get("/notifications", response_model=List[NotificationResponse])

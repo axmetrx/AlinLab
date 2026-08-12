@@ -35,27 +35,47 @@ export const AdminDashboard = () => {
     setFileUploading(true);
     setUploadedFileName(file.name);
 
-    const formData = new FormData();
-    formData.append('file', file);
-
     try {
+      const formData = new FormData();
+      formData.append('file', file);
+
       const res = await api.post('/admin/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      const uploadedUrl = res.data.url;
       
+      let uploadedUrl = res.data.url;
+      if (uploadedUrl && uploadedUrl.startsWith('/')) {
+        const backendBase = (import.meta.env.VITE_API_URL || 'https://alinlab-backend.onrender.com/api').replace(/\/api\/?$/, '');
+        uploadedUrl = `${backendBase}${uploadedUrl}`;
+      }
+
       if (lessonType === 'gallery') {
         setGalleryUrls(prev => (prev ? `${prev}\n${uploadedUrl}` : uploadedUrl));
       } else {
         setLessonVideoUrl(uploadedUrl);
       }
-    } catch (err) {
-      alert('Ошибка при загрузке файла: ' + (err.response?.data?.detail || err.message));
-      setUploadedFileName('');
-    } finally {
       setFileUploading(false);
+    } catch (uploadErr) {
+      console.warn('Backend file upload failed, applying FileReader DataURL fallback:', uploadErr);
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target.result;
+        if (lessonType === 'gallery') {
+          setGalleryUrls(prev => (prev ? `${prev}\n${dataUrl}` : dataUrl));
+        } else {
+          setLessonVideoUrl(dataUrl);
+        }
+        setFileUploading(false);
+      };
+      reader.onerror = () => {
+        alert('Не удалось прочесть файл с компьютера');
+        setFileUploading(false);
+      };
+      reader.readAsDataURL(file);
     }
   };
+
 
 
 
