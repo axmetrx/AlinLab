@@ -161,10 +161,10 @@ def get_admin_lessons(admin: User = Depends(get_admin_user), db: Session = Depen
 def create_lesson(lesson_in: LessonCreate, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
     lesson = Lesson(
         title=lesson_in.title,
-        description=lesson_in.description,
-        video_url=lesson_in.video_url,
+        description=lesson_in.description or "",
+        video_url=lesson_in.video_url or "",
         lesson_type=lesson_in.lesson_type or "video",
-        gallery_urls=lesson_in.gallery_urls
+        gallery_urls=lesson_in.gallery_urls or ""
     )
     db.add(lesson)
     db.commit()
@@ -204,6 +204,7 @@ def update_lesson(lesson_id: int, lesson_in: LessonUpdate, admin: User = Depends
     db.commit()
     db.refresh(lesson)
     return lesson
+
 
 
 

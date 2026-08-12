@@ -57,9 +57,27 @@ def ensure_postgres_db_exists(url: str):
     except Exception as e:
         logger.warning(f"PostgreSQL database check warning: {e}")
 
+def run_db_migrations(engine):
+    """
+    Ensures columns lesson_type and gallery_urls exist in lessons table
+    and video_url column is nullable in PostgreSQL / SQLite.
+    """
+    try:
+        with engine.connect() as conn:
+            # PostgreSQL schema migration
+            conn.execute(text("ALTER TABLE lessons ADD COLUMN IF NOT EXISTS lesson_type VARCHAR DEFAULT 'video';"))
+            conn.execute(text("ALTER TABLE lessons ADD COLUMN IF NOT EXISTS gallery_urls TEXT;"))
+            conn.execute(text("ALTER TABLE lessons ALTER COLUMN video_url DROP NOT NULL;"))
+            conn.commit()
+            logger.info("Successfully executed database schema migrations for lessons table.")
+    except Exception as e:
+        logger.info(f"Db migration check notice: {e}")
+
 def get_engine(url: str):
     if url.startswith("sqlite"):
-        return create_engine(url, connect_args={"check_same_thread": False})
+        eng = create_engine(url, connect_args={"check_same_thread": False})
+        run_db_migrations(eng)
+        return eng
 
     ensure_postgres_db_exists(url)
 
@@ -68,10 +86,14 @@ def get_engine(url: str):
         with engine.connect() as conn:
             pass
         logger.info(f"Successfully connected to PostgreSQL database at {url}")
+        run_db_migrations(engine)
         return engine
     except Exception as e:
         logger.warning(f"Could not connect to PostgreSQL ({e}). Falling back to SQLite.")
-        return create_engine("sqlite:///./alinlab.db", connect_args={"check_same_thread": False})
+        eng = create_engine("sqlite:///./alinlab.db", connect_args={"check_same_thread": False})
+        run_db_migrations(eng)
+        return eng
+
 
 engine = get_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
