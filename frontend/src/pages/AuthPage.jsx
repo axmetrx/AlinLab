@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Sparkles, Mail, Lock, User, ArrowRight, HeartHandshake } from 'lucide-react';
+import { Sparkles, Mail, Lock, User, ArrowRight } from 'lucide-react';
 
 export const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -35,15 +35,6 @@ export const AuthPage = () => {
     }
   };
 
-  const setDemoUser = (type) => {
-    if (type === 'admin') {
-      setEmail('admin@alinlab.ru');
-      setPassword('adminpassword');
-    } else {
-      setEmail('student@alinlab.ru');
-      setPassword('studentpassword');
-    }
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-cream via-cream-card to-rose-light/20 relative overflow-hidden">
@@ -157,30 +148,8 @@ export const AuthPage = () => {
           </button>
         </div>
 
-        {/* Demo Accounts Quick Login */}
-        <div className="mt-8 pt-6 border-t border-cream-border/60">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-deep-muted text-center mb-3">
-            Демо-доступ для тестирования:
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={() => { setIsLogin(true); setDemoUser('student'); }}
-              className="py-2.5 px-3 rounded-xl bg-white hover:bg-rose-light border border-cream-border text-deep text-xs font-medium transition-all flex items-center justify-center space-x-1.5"
-            >
-              <HeartHandshake className="w-3.5 h-3.5 text-rose" />
-              <span>Студент</span>
-            </button>
-            <button
-              onClick={() => { setIsLogin(true); setDemoUser('admin'); }}
-              className="py-2.5 px-3 rounded-xl bg-white hover:bg-rose-light border border-cream-border text-deep text-xs font-medium transition-all flex items-center justify-center space-x-1.5"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-rose" />
-              <span>Админ</span>
-            </button>
-          </div>
-        </div>
-
       </div>
     </div>
   );
 };
+
