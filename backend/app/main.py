@@ -1,8 +1,10 @@
 import sys
 import os
 import logging
+import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -37,8 +39,8 @@ except Exception as e:
     logger.warning(f"Could not auto-seed database: {e}")
 
 app = FastAPI(
-    title="AlinLab Learning Platform API",
-    description="Backend API for AlinLab Online Learning Platform",
+    title="Okademalin Learning Platform API",
+    description="Backend API for Okademalin Online Learning Platform",
     version="1.0.0"
 )
 
@@ -64,17 +66,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-
 # Include Routers
 app.include_router(auth.router)
 app.include_router(student.router)
 app.include_router(admin.router)
 
 @app.get("/")
-def root():
+def read_root():
     return {
-        "status": "online",
-        "app": "AlinLab Online Learning Platform API",
-        "version": "1.0.0"
+        "status": "ok",
+        "message": "Okademalin API is operational",
+        "app": "Okademalin Online Learning Platform API",
+        "timestamp": datetime.datetime.utcnow().isoformat()
     }

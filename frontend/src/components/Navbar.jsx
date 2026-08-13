@@ -19,7 +19,8 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
           </div>
           <div>
             <span className="font-serif text-2xl font-semibold tracking-wide text-deep block leading-tight">
-              AlinLab
+              Okademalin
+
             </span>
             <span className="text-[10px] tracking-widest text-deep-muted uppercase block font-medium">
               Академия Обучения

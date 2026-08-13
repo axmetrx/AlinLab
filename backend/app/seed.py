@@ -17,10 +17,12 @@ def seed_data():
             admin = User(
                 email="admin@alinlab.ru",
                 hashed_password=hash_password("adminpassword"),
-                full_name="Администратор AlinLab",
+                full_name="Администратор Okademalin",
                 role="admin"
             )
             db.add(admin)
+            db.commit()
+            db.refresh(admin)
             logger.info("Admin user created: admin@alinlab.ru / adminpassword")
 
         # Check if student exists
@@ -43,7 +45,7 @@ def seed_data():
             # Initial notification
             welcome = Notification(
                 user_id=student.id,
-                message="Добро пожаловать в AlinLab! Ожидайте активации доступа администратором."
+                message="Добро пожаловать в Okademalin! Ожидайте активации доступа администратором."
             )
             db.add(welcome)
             logger.info("Student user created: student@alinlab.ru / studentpassword")

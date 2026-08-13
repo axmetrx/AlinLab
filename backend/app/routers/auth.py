@@ -35,7 +35,8 @@ def register(user_in: UserRegister, db: Session = Depends(get_db)):
     # Welcome notification
     welcome_note = Notification(
         user_id=user.id,
-        message="Добро пожаловать в AlinLab! Ваша учетная запись создана. Ожидайте активации доступа администратором."
+        message="Добро пожаловать в Okademalin! Ваша учетная запись создана. Ожидайте активации доступа администратором."
+
     )
     db.add(welcome_note)
     db.commit()

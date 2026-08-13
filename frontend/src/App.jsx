@@ -19,7 +19,8 @@ const MainLayout = () => {
       <div className="min-h-screen flex items-center justify-center bg-cream">
         <div className="text-center space-y-3">
           <div className="w-12 h-12 rounded-full border-4 border-rose-light border-t-rose animate-spin mx-auto" />
-          <p className="text-sm font-medium text-deep-muted">Загрузка платформы AlinLab...</p>
+          <p className="text-sm font-medium text-deep-muted">Загрузка платформы Okademalin...</p>
+
         </div>
       </div>
     );

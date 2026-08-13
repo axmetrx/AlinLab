@@ -51,8 +51,9 @@ export const AuthPage = () => {
             <Sparkles className="w-7 h-7" />
           </div>
           <h1 className="font-serif text-3xl font-bold text-deep tracking-wide">
-            AlinLab
+            Okademalin
           </h1>
+
           <p className="text-sm text-deep-muted mt-1 font-medium">
             {isLogin ? 'Добро пожаловать в пространство обучения' : 'Присоединяйтесь к нашей платформе'}
           </p>
