@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { VideoModal } from '../components/VideoModal';
+import { LessonView } from '../components/LessonView';
 import { Clock, Play, Lock, Sparkles, BookOpen, FileText, Images, ShieldCheck } from 'lucide-react';
 
 export const StudentDashboard = () => {
@@ -90,7 +90,11 @@ export const StudentDashboard = () => {
     return 'Смотреть';
   };
 
-  // ACTIVE ACCESS SCREEN: Lessons Grid
+  // ACTIVE ACCESS SCREEN: Lessons Grid or Lesson View
+  if (selectedLesson) {
+    return <LessonView lesson={selectedLesson} onBack={() => setSelectedLesson(null)} />;
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-24 md:pb-12 animate-fade-in space-y-6">
       
@@ -205,14 +209,6 @@ export const StudentDashboard = () => {
             );
           })}
         </div>
-      )}
-
-      {/* Video Modal Player */}
-      {selectedLesson && (
-        <VideoModal
-          lesson={selectedLesson}
-          onClose={() => setSelectedLesson(null)}
-        />
       )}
 
     </div>
