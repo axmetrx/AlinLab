@@ -29,7 +29,7 @@ def seed_data():
             student = User(
                 email="student@alinlab.ru",
                 hashed_password=hash_password("studentpassword"),
-                full_name="Елена Смирнова",
+                full_name="Айжамал Бакытова",
                 role="student"
             )
             db.add(student)

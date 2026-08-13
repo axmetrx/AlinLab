@@ -77,7 +77,7 @@ export const AuthPage = () => {
                 <input
                   type="text"
                   required
-                  placeholder="Елена Смирнова"
+                  placeholder="Айжамал Бакытова"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-white border border-cream-border text-deep text-sm placeholder-deep-light focus:outline-none focus:border-rose focus:ring-2 focus:ring-rose/20 transition-all"
@@ -95,13 +95,14 @@ export const AuthPage = () => {
               <input
                 type="email"
                 required
-                placeholder="name@example.com"
+                placeholder="aijamal@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-white border border-cream-border text-deep text-sm placeholder-deep-light focus:outline-none focus:border-rose focus:ring-2 focus:ring-rose/20 transition-all"
               />
             </div>
           </div>
+
 
           <div>
             <label className="block text-xs font-semibold text-deep mb-1.5 uppercase tracking-wider">
