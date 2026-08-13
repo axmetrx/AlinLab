@@ -546,65 +546,36 @@ export const AdminDashboard = () => {
 
             <form onSubmit={handleSaveLesson} className="space-y-4">
               
-              {/* Material Type Selector */}
+              {/* Source Type Selector: Link URL vs File Upload */}
               <div>
-                <label className="block text-xs font-semibold text-deep mb-2 uppercase tracking-wider">
-                  Тип учебного материала
+                <label className="block text-xs font-semibold text-deep mb-1.5 uppercase tracking-wider">
+                  Способ добавления материала
                 </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { type: 'video', label: '🎥 Видео' },
-                    { type: 'file', label: '📁 Файл' },
-                    { type: 'gallery', label: '🖼️ Галерея' },
-                  ].map((t) => (
-                    <button
-                      key={t.type}
-                      type="button"
-                      onClick={() => setLessonType(t.type)}
-                      className={`py-2.5 px-3 rounded-2xl text-xs font-semibold transition-all border ${
-                        lessonType === t.type
-                          ? 'bg-rose text-white border-rose shadow-rose'
-                          : 'bg-white text-deep border-cream-border hover:bg-cream-card'
-                      }`}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSourceType('url')}
+                    className={`py-2.5 px-3 rounded-2xl text-xs font-semibold transition-all border ${
+                      sourceType === 'url'
+                        ? 'bg-rose text-white border-rose shadow-rose'
+                        : 'bg-white text-deep border-cream-border hover:bg-cream-card'
+                    }`}
+                  >
+                    🔗 Указать ссылку (URL)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSourceType('upload')}
+                    className={`py-2.5 px-3 rounded-2xl text-xs font-semibold transition-all border ${
+                      sourceType === 'upload'
+                        ? 'bg-rose text-white border-rose shadow-rose'
+                        : 'bg-white text-deep border-cream-border hover:bg-cream-card'
+                    }`}
+                  >
+                    📤 Загрузить файл с ПК
+                  </button>
                 </div>
               </div>
-
-              {/* Source Type Selector: Link URL vs File Upload */}
-              {lessonType !== 'gallery' && (
-                <div>
-                  <label className="block text-xs font-semibold text-deep mb-1.5 uppercase tracking-wider">
-                    Способ добавления {lessonType === 'video' ? 'видео' : 'файла'}
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setSourceType('url')}
-                      className={`py-2 px-3 rounded-xl text-xs font-semibold transition-all border ${
-                        sourceType === 'url'
-                          ? 'bg-deep text-white border-deep'
-                          : 'bg-white text-deep-muted border-cream-border hover:bg-cream-card'
-                      }`}
-                    >
-                      🔗 Указать ссылку (URL)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSourceType('upload')}
-                      className={`py-2 px-3 rounded-xl text-xs font-semibold transition-all border ${
-                        sourceType === 'upload'
-                          ? 'bg-deep text-white border-deep'
-                          : 'bg-white text-deep-muted border-cream-border hover:bg-cream-card'
-                      }`}
-                    >
-                      📤 Загрузить файл с ПК
-                    </button>
-                  </div>
-                </div>
-              )}
 
               <div>
                 <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
@@ -621,31 +592,15 @@ export const AdminDashboard = () => {
               </div>
 
               {/* URL Input */}
-              {sourceType === 'url' && lessonType === 'video' && (
+              {sourceType === 'url' && (
                 <div>
                   <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
-                    Ссылка на видео (YouTube / Vimeo / MP4)
+                    Ссылка на видео или файл (YouTube / Vimeo / MP4 / Ссылка)
                   </label>
                   <input
                     type="url"
                     required
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    value={lessonVideoUrl}
-                    onChange={(e) => setLessonVideoUrl(e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl bg-white border border-cream-border text-deep text-sm focus:outline-none focus:border-rose"
-                  />
-                </div>
-              )}
-
-              {sourceType === 'url' && lessonType === 'file' && (
-                <div>
-                  <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
-                    Ссылка на документ / файл
-                  </label>
-                  <input
-                    type="url"
-                    required
-                    placeholder="https://example.com/document.pdf"
+                    placeholder="https://www.youtube.com/watch?v=... или https://example.com/file.pdf"
                     value={lessonVideoUrl}
                     onChange={(e) => setLessonVideoUrl(e.target.value)}
                     className="w-full px-4 py-3 rounded-2xl bg-white border border-cream-border text-deep text-sm focus:outline-none focus:border-rose"
@@ -659,10 +614,10 @@ export const AdminDashboard = () => {
                   <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
                     Выберите файл с вашего компьютера
                   </label>
-                  <div className="relative border-2 border-dashed border-rose/40 hover:border-rose rounded-2xl p-4 text-center bg-rose-light/20 transition-all">
+                  <div className="relative border-2 border-dashed border-rose/40 hover:border-rose rounded-2xl p-5 text-center bg-rose-light/20 transition-all">
                     <input
                       type="file"
-                      accept={lessonType === 'video' ? 'video/*' : '*/*'}
+                      accept="video/*,image/*,application/pdf,.doc,.docx"
                       onChange={handleFileUpload}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     />
@@ -671,18 +626,19 @@ export const AdminDashboard = () => {
                         {fileUploading ? '⏳ Идет загрузка файла на сервер...' : '📤 Нажмите или перетащите файл с ПК сюда'}
                       </p>
                       <p className="text-[11px] text-deep-muted">
-                        {lessonType === 'video' ? 'Форматы: MP4, WEBM, MOV, AVI' : 'Любые документы и файлы'}
+                        Поддерживаются видео (MP4, MOV), фото и документы
                       </p>
                     </div>
                   </div>
                   {uploadedFileName && (
-                    <p className="text-xs text-emerald-600 font-semibold mt-1 flex items-center space-x-1">
-                      <span>✓ Загружен файл:</span>
+                    <p className="text-xs text-emerald-600 font-semibold mt-2 flex items-center space-x-1">
+                      <span>✓ Выбран файл:</span>
                       <strong className="underline truncate">{uploadedFileName}</strong>
                     </p>
                   )}
                 </div>
               )}
+
 
               {lessonType === 'gallery' && (
                 <div className="space-y-3">
