@@ -70,7 +70,11 @@ def run_db_migrations(engine):
         "ALTER TABLE lessons ALTER COLUMN gallery_urls TYPE TEXT;",
         "UPDATE lessons SET lesson_type = 'video' WHERE lesson_type IS NULL;",
         "UPDATE lessons SET gallery_urls = '' WHERE gallery_urls IS NULL;",
-        "UPDATE lessons SET video_url = '' WHERE video_url IS NULL;"
+        "UPDATE lessons SET video_url = '' WHERE video_url IS NULL;",
+        "ALTER TABLE user_accesses DROP CONSTRAINT IF EXISTS user_accesses_user_id_fkey;",
+        "ALTER TABLE user_accesses ADD CONSTRAINT user_accesses_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;",
+        "ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_user_id_fkey;",
+        "ALTER TABLE notifications ADD CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;"
     ]
     for stmt in statements:
         try:
