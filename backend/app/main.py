@@ -2,22 +2,23 @@ import sys
 import os
 import logging
 import datetime
+import traceback
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import staticfiles
-
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
+from fastapi.staticfiles import StaticFiles
 
 from app.database import engine, Base
 from app.routers import auth, student, admin
 from app.seed import seed_data
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("alinlab.main")
+logger = logging.getLogger("okademalin.main")
 
 # Ensure uploads directory exists
 os.makedirs("uploads", exist_ok=True)
@@ -44,32 +45,50 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Global exception handler ensuring CORS headers on all errors
-@app.exception_handler(Exception)
-def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Global exception handling request {request.url}: {exc}", exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content={"detail": str(exc)},
-        headers={"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*", "Access-Control-Allow-Methods": "*"}
-    )
 
-# Mount static uploads directory for uploaded local files
-app.mount("/uploads", staticfiles.StaticFiles(directory="uploads"), name="uploads")
-
-# Enable CORS for frontend development and production origins
+# ---- CORS: Must be FIRST middleware added ----
+# Note: allow_credentials=True is incompatible with allow_origins=["*"]
+# per the CORS spec. We use allow_credentials=False with wildcard origins.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
+
+
+# ---- Catch-all error middleware that guarantees CORS on 500s ----
+class CatchAllErrorMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        try:
+            response = await call_next(request)
+            return response
+        except Exception as exc:
+            logger.error(f"Unhandled error on {request.method} {request.url}: {exc}")
+            logger.error(traceback.format_exc())
+            return JSONResponse(
+                status_code=500,
+                content={"detail": str(exc)},
+                headers={
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "*",
+                    "Access-Control-Allow-Headers": "*",
+                },
+            )
+
+app.add_middleware(CatchAllErrorMiddleware)
+
+
+# Mount static uploads directory for uploaded local files
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # Include Routers
 app.include_router(auth.router)
 app.include_router(student.router)
 app.include_router(admin.router)
+
 
 @app.get("/")
 def read_root():

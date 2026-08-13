@@ -43,12 +43,8 @@ export const AdminDashboard = () => {
       const res = await api.post('/admin/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      
+
       let uploadedUrl = res.data.url;
-      if (uploadedUrl && uploadedUrl.startsWith('/')) {
-        const backendBase = (import.meta.env.VITE_API_URL || 'https://alinlab-backend.onrender.com/api').replace(/\/api\/?$/, '');
-        uploadedUrl = `${backendBase}${uploadedUrl}`;
-      }
 
       if (lessonType === 'gallery') {
         setGalleryUrls(prev => (prev ? `${prev}\n${uploadedUrl}` : uploadedUrl));
@@ -57,8 +53,8 @@ export const AdminDashboard = () => {
       }
       setFileUploading(false);
     } catch (uploadErr) {
-      console.warn('Backend file upload failed, applying FileReader DataURL fallback:', uploadErr);
-      
+      console.warn('Server upload failed, using local file DataURL:', uploadErr);
+
       const reader = new FileReader();
       reader.onload = (event) => {
         const dataUrl = event.target.result;
@@ -76,6 +72,7 @@ export const AdminDashboard = () => {
       reader.readAsDataURL(file);
     }
   };
+
 
 
 

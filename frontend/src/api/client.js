@@ -1,10 +1,10 @@
 import axios from 'axios';
 
-// Default to direct Render backend URL if VITE_API_URL is not set
-const DEFAULT_BACKEND_URL = 'https://alinlab-backend.onrender.com/api';
-
+// Use Vercel proxy to avoid CORS issues entirely.
+// In production on Vercel, /api/* rewrites to the Render backend.
+// In local dev, set VITE_API_URL to http://localhost:8000/api
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || DEFAULT_BACKEND_URL,
+  baseURL: import.meta.env.VITE_API_URL || '/api',
 });
 
 // Interceptor to attach Authorization JWT token automatically

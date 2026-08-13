@@ -2,6 +2,7 @@ import datetime
 import os
 import uuid
 import shutil
+import logging
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
@@ -11,6 +12,7 @@ from app.models import User, Lesson, UserAccess, Notification
 from app.schemas import LessonCreate, LessonUpdate, LessonResponse, GrantAccessRequest, UserAccessResponse
 from app.auth import get_admin_user
 
+logger = logging.getLogger("okademalin.admin")
 router = APIRouter(prefix="/api/admin", tags=["Admin"])
 
 
@@ -152,50 +154,69 @@ def delete_student(user_id: int, admin: User = Depends(get_admin_user), db: Sess
 
 
 # --- Lessons CRUD ---
-@router.get("/lessons", response_model=List[LessonResponse])
+@router.get("/lessons")
 def get_admin_lessons(admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
-    lessons = db.query(Lesson).order_by(Lesson.created_at.desc()).all()
-    for l in lessons:
-        if getattr(l, 'lesson_type', None) is None:
-            l.lesson_type = "video"
-        if getattr(l, 'video_url', None) is None:
-            l.video_url = ""
-        if getattr(l, 'description', None) is None:
-            l.description = ""
-        if getattr(l, 'gallery_urls', None) is None:
-            l.gallery_urls = ""
-    return lessons
+    try:
+        lessons = db.query(Lesson).order_by(Lesson.created_at.desc()).all()
+        result = []
+        for l in lessons:
+            result.append({
+                "id": l.id,
+                "title": l.title or "",
+                "description": l.description or "",
+                "video_url": l.video_url or "",
+                "lesson_type": l.lesson_type or "video",
+                "gallery_urls": l.gallery_urls or "",
+                "created_at": l.created_at.isoformat() if l.created_at else None
+            })
+        return result
+    except Exception as e:
+        logger.error(f"Error fetching lessons: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 
-@router.post("/lessons", response_model=LessonResponse)
+@router.post("/lessons")
 def create_lesson(lesson_in: LessonCreate, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
-    lesson = Lesson(
-        title=lesson_in.title,
-        description=lesson_in.description or "",
-        video_url=lesson_in.video_url or "",
-        lesson_type=lesson_in.lesson_type or "video",
-        gallery_urls=lesson_in.gallery_urls or ""
-    )
-    db.add(lesson)
-    db.commit()
-    db.refresh(lesson)
-
-    # Notify all active students about the new lesson
-    students = db.query(User).filter(User.role == "student").all()
-    type_label = "новый материал" if lesson.lesson_type != "video" else "новый видеоурок"
-    for student in students:
-        note = Notification(
-            user_id=student.id,
-            message=f"Вышел {type_label}: «{lesson.title}»! Посмотрите его прямо сейчас в личном кабинете."
+    try:
+        lesson = Lesson(
+            title=lesson_in.title,
+            description=lesson_in.description or "",
+            video_url=lesson_in.video_url or "",
+            lesson_type=lesson_in.lesson_type or "video",
+            gallery_urls=lesson_in.gallery_urls or ""
         )
-        db.add(note)
-    db.commit()
+        db.add(lesson)
+        db.commit()
+        db.refresh(lesson)
 
-    return lesson
+        # Notify all active students about the new lesson
+        students = db.query(User).filter(User.role == "student").all()
+        type_label = "новый материал" if lesson.lesson_type != "video" else "новый видеоурок"
+        for student in students:
+            note = Notification(
+                user_id=student.id,
+                message=f"Вышел {type_label}: «{lesson.title}»! Посмотрите его прямо сейчас в личном кабинете."
+            )
+            db.add(note)
+        db.commit()
+
+        return {
+            "id": lesson.id,
+            "title": lesson.title or "",
+            "description": lesson.description or "",
+            "video_url": lesson.video_url or "",
+            "lesson_type": lesson.lesson_type or "video",
+            "gallery_urls": lesson.gallery_urls or "",
+            "created_at": lesson.created_at.isoformat() if lesson.created_at else None
+        }
+    except Exception as e:
+        logger.error(f"Error creating lesson: {e}", exc_info=True)
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/lessons/{lesson_id}", response_model=LessonResponse)
+@router.put("/lessons/{lesson_id}")
 def update_lesson(lesson_id: int, lesson_in: LessonUpdate, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
     lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
     if not lesson:
@@ -214,7 +235,15 @@ def update_lesson(lesson_id: int, lesson_in: LessonUpdate, admin: User = Depends
 
     db.commit()
     db.refresh(lesson)
-    return lesson
+    return {
+        "id": lesson.id,
+        "title": lesson.title or "",
+        "description": lesson.description or "",
+        "video_url": lesson.video_url or "",
+        "lesson_type": lesson.lesson_type or "video",
+        "gallery_urls": lesson.gallery_urls or "",
+        "created_at": lesson.created_at.isoformat() if lesson.created_at else None
+    }
 
 
 
