@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/client';
-import { Shield, Users, BookOpen, Plus, Calendar, Clock, CheckCircle, XCircle, Trash2, Edit3, Sparkles, X, Link, Play } from 'lucide-react';
+import { Shield, Users, BookOpen, Plus, Calendar, Clock, CheckCircle, XCircle, Trash2, Edit3, Sparkles, X, Link, Play, Upload, FileText } from 'lucide-react';
+
 
 export const AdminDashboard = () => {
   const [activeSubTab, setActiveSubTab] = useState('students'); // 'students' | 'lessons'
@@ -525,174 +526,152 @@ export const AdminDashboard = () => {
 
       {/* --- CREATE / EDIT LESSON MODAL --- */}
       {lessonModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-deep/60 backdrop-blur-md p-4 animate-fade-in">
-          <div className="bg-cream rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-cream-border space-y-6">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-deep/70 backdrop-blur-md p-4 sm:p-6 flex items-center justify-center animate-fade-in">
+          <div className="bg-cream rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-cream-border my-auto max-h-[85vh] overflow-y-auto space-y-6 scrollbar-thin">
+            
+            {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-cream-border pb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-2xl bg-rose-light text-rose-dark flex items-center justify-center">
+                <div className="w-10 h-10 rounded-2xl bg-rose-light text-rose-dark flex items-center justify-center shadow-inner">
                   <Play className="w-5 h-5 fill-rose-dark" />
                 </div>
                 <div>
-                  <h3 className="font-serif text-lg font-bold text-deep">
-                    {editingLesson ? 'Редактировать видеоурок' : 'Добавить новый видеоурок'}
+                  <h3 className="font-serif text-xl font-bold text-deep leading-tight">
+                    {editingLesson ? 'Редактировать материал' : 'Добавить новый материал'}
                   </h3>
-                  <p className="text-xs text-deep-muted">Материал станет доступен ученикам с активным доступом</p>
+                  <p className="text-xs text-deep-muted mt-0.5">
+                    Материал сразу появится в программе обучения
+                  </p>
                 </div>
               </div>
-              <button onClick={() => setLessonModalOpen(false)} className="p-1 rounded-full text-deep-muted hover:text-deep">
+              <button 
+                onClick={() => setLessonModalOpen(false)} 
+                className="p-2 rounded-full text-deep-muted hover:text-deep hover:bg-cream-card transition-colors"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleSaveLesson} className="space-y-4">
               
-              {/* Source Type Selector: Link URL vs File Upload */}
+              {/* Source Type Selector */}
               <div>
-                <label className="block text-xs font-semibold text-deep mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-semibold text-deep mb-2 uppercase tracking-wider">
                   Способ добавления материала
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setSourceType('url')}
-                    className={`py-2.5 px-3 rounded-2xl text-xs font-semibold transition-all border ${
+                    className={`py-3 px-4 rounded-2xl text-xs font-semibold transition-all duration-200 border flex items-center justify-center space-x-2 ${
                       sourceType === 'url'
-                        ? 'bg-rose text-white border-rose shadow-rose'
-                        : 'bg-white text-deep border-cream-border hover:bg-cream-card'
+                        ? 'bg-rose text-white border-rose shadow-rose font-bold'
+                        : 'bg-white text-deep-muted border-cream-border hover:bg-cream-card hover:text-deep'
                     }`}
                   >
-                    🔗 Указать ссылку (URL)
+                    <Link className="w-4 h-4" />
+                    <span>Указать ссылку (URL)</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setSourceType('upload')}
-                    className={`py-2.5 px-3 rounded-2xl text-xs font-semibold transition-all border ${
+                    className={`py-3 px-4 rounded-2xl text-xs font-semibold transition-all duration-200 border flex items-center justify-center space-x-2 ${
                       sourceType === 'upload'
-                        ? 'bg-rose text-white border-rose shadow-rose'
-                        : 'bg-white text-deep border-cream-border hover:bg-cream-card'
+                        ? 'bg-rose text-white border-rose shadow-rose font-bold'
+                        : 'bg-white text-deep-muted border-cream-border hover:bg-cream-card hover:text-deep'
                     }`}
                   >
-                    📤 Загрузить файл с ПК
+                    <Upload className="w-4 h-4" />
+                    <span>Загрузить файл с ПК</span>
                   </button>
                 </div>
               </div>
 
+              {/* Title Field */}
               <div>
-                <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
+                <label className="block text-xs font-semibold text-deep mb-1.5 uppercase tracking-wider">
                   Название материала
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="Введите заголовок..."
+                  placeholder="Например: Урок 1. Заголовок курса..."
                   value={lessonTitle}
                   onChange={(e) => setLessonTitle(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl bg-white border border-cream-border text-deep text-sm focus:outline-none focus:border-rose"
+                  className="w-full px-4 py-3.5 rounded-2xl bg-white border border-cream-border text-deep text-sm placeholder-deep-light focus:outline-none focus:border-rose focus:ring-2 focus:ring-rose/20 transition-all"
                 />
               </div>
 
-              {/* URL Input */}
+              {/* URL Mode */}
               {sourceType === 'url' && (
                 <div>
-                  <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
-                    Ссылка на видео или файл (YouTube / Vimeo / MP4 / Ссылка)
+                  <label className="block text-xs font-semibold text-deep mb-1.5 uppercase tracking-wider">
+                    Ссылка на файл или видео (YouTube / Vimeo / MP4 / PDF)
                   </label>
                   <input
                     type="url"
                     required
-                    placeholder="https://www.youtube.com/watch?v=... или https://example.com/file.pdf"
+                    placeholder="https://www.youtube.com/watch?v=... или https://..."
                     value={lessonVideoUrl}
                     onChange={(e) => setLessonVideoUrl(e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl bg-white border border-cream-border text-deep text-sm focus:outline-none focus:border-rose"
+                    className="w-full px-4 py-3.5 rounded-2xl bg-white border border-cream-border text-deep text-sm placeholder-deep-light focus:outline-none focus:border-rose focus:ring-2 focus:ring-rose/20 transition-all"
                   />
                 </div>
               )}
 
-              {/* Local File Upload Dropzone */}
+              {/* Upload Mode */}
               {sourceType === 'upload' && (
                 <div>
-                  <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
-                    Выберите файл с вашего компьютера
+                  <label className="block text-xs font-semibold text-deep mb-1.5 uppercase tracking-wider">
+                    Загрузка файла с вашего компьютера
                   </label>
-                  <div className="relative border-2 border-dashed border-rose/40 hover:border-rose rounded-2xl p-5 text-center bg-rose-light/20 transition-all">
+                  <div className="relative border-2 border-dashed border-rose/30 hover:border-rose rounded-2xl p-6 text-center bg-cream-card/60 transition-all cursor-pointer group">
                     <input
                       type="file"
                       accept="video/*,image/*,application/pdf,.doc,.docx"
                       onChange={handleFileUpload}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     />
-                    <div className="space-y-1">
-                      <p className="text-xs font-bold text-rose-dark">
-                        {fileUploading ? '⏳ Идет загрузка файла на сервер...' : '📤 Нажмите или перетащите файл с ПК сюда'}
+                    <div className="space-y-2">
+                      <div className="w-12 h-12 rounded-2xl bg-rose-light text-rose mx-auto flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Upload className="w-6 h-6" />
+                      </div>
+                      <p className="text-xs font-bold text-deep">
+                        {fileUploading ? '⏳ Идет загрузка файла на сервер...' : 'Нажмите или перетащите файл сюда'}
                       </p>
                       <p className="text-[11px] text-deep-muted">
-                        Поддерживаются видео (MP4, MOV), фото и документы
+                        Видео (MP4, MOV), фотографии или документы
                       </p>
                     </div>
                   </div>
                   {uploadedFileName && (
-                    <p className="text-xs text-emerald-600 font-semibold mt-2 flex items-center space-x-1">
-                      <span>✓ Выбран файл:</span>
-                      <strong className="underline truncate">{uploadedFileName}</strong>
+                    <p className="text-xs text-emerald-700 font-semibold mt-2.5 flex items-center space-x-1.5 bg-emerald-50 p-3 rounded-xl border border-emerald-100">
+                      <Sparkles className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                      <span className="truncate">Выбран файл: <strong>{uploadedFileName}</strong></span>
                     </p>
                   )}
                 </div>
               )}
 
-
-              {lessonType === 'gallery' && (
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
-                      Загрузить фото с ПК или вставить ссылки
-                    </label>
-                    <div className="relative border-2 border-dashed border-rose/40 hover:border-rose rounded-2xl p-3 text-center bg-rose-light/20 transition-all mb-2">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileUpload}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                      />
-                      <p className="text-xs font-bold text-rose-dark">
-                        {fileUploading ? '⏳ Загрузка изображения...' : '📷 Нажмите, чтобы добавить изображение с компьютера'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
-                      Список ссылок на фото (по одной на строку)
-                    </label>
-                    <textarea
-                      rows="3"
-                      required
-                      placeholder="https://example.com/photo1.jpg&#10;/uploads/image.jpg"
-                      value={galleryUrls}
-                      onChange={(e) => setGalleryUrls(e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl bg-white border border-cream-border text-deep text-sm focus:outline-none focus:border-rose"
-                    />
-                  </div>
-                </div>
-              )}
-
-
+              {/* Description Field */}
               <div>
-                <label className="block text-xs font-semibold text-deep mb-1 uppercase tracking-wider">
+                <label className="block text-xs font-semibold text-deep mb-1.5 uppercase tracking-wider">
                   Описание и инструкции
                 </label>
                 <textarea
                   rows="3"
-                  placeholder="Подробное описание..."
+                  placeholder="Подробное описание к материалу и задания..."
                   value={lessonDesc}
                   onChange={(e) => setLessonDesc(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl bg-white border border-cream-border text-deep text-sm focus:outline-none focus:border-rose"
+                  className="w-full px-4 py-3.5 rounded-2xl bg-white border border-cream-border text-deep text-sm placeholder-deep-light focus:outline-none focus:border-rose focus:ring-2 focus:ring-rose/20 transition-all"
                 />
               </div>
 
+              {/* Submit Button */}
               <button
                 type="submit"
-                disabled={lessonSubmitLoading}
-                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose to-rose-hover text-white font-semibold text-sm shadow-rose hover:shadow-lg transition-all disabled:opacity-50 mt-2"
+                disabled={lessonSubmitLoading || fileUploading}
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-rose to-rose-hover text-white font-semibold text-sm shadow-rose hover:shadow-lg transition-all duration-200 disabled:opacity-50 mt-2"
               >
                 {lessonSubmitLoading ? 'Сохранение...' : editingLesson ? 'Сохранить изменения' : 'Опубликовать и оповестить учеников'}
               </button>
@@ -705,3 +684,4 @@ export const AdminDashboard = () => {
     </div>
   );
 };
+
