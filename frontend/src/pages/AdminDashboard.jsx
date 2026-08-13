@@ -527,12 +527,12 @@ export const AdminDashboard = () => {
       {/* --- CREATE / EDIT LESSON MODAL --- */}
       {lessonModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-deep/70 backdrop-blur-md p-4 sm:p-6 flex items-center justify-center animate-fade-in">
-          <div className="bg-cream rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-cream-border my-auto max-h-[85vh] overflow-y-auto space-y-6 scrollbar-thin">
+          <div className="bg-cream rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-cream-border my-auto flex flex-col max-h-[85vh]">
             
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-cream-border pb-4">
+            {/* Modal Header (Fixed at top) */}
+            <div className="flex items-center justify-between border-b border-cream-border pb-4 mb-4 flex-shrink-0">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-2xl bg-rose-light text-rose-dark flex items-center justify-center shadow-inner">
+                <div className="w-10 h-10 rounded-2xl bg-rose-light text-rose-dark flex items-center justify-center shadow-inner flex-shrink-0">
                   <Play className="w-5 h-5 fill-rose-dark" />
                 </div>
                 <div>
@@ -546,13 +546,14 @@ export const AdminDashboard = () => {
               </div>
               <button 
                 onClick={() => setLessonModalOpen(false)} 
-                className="p-2 rounded-full text-deep-muted hover:text-deep hover:bg-cream-card transition-colors"
+                className="p-2 rounded-full text-deep-muted hover:text-deep hover:bg-cream-card transition-colors flex-shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveLesson} className="space-y-4">
+            {/* Scrollable Form Body */}
+            <form onSubmit={handleSaveLesson} className="flex-1 overflow-y-auto pr-1 space-y-4">
               
               {/* Source Type Selector */}
               <div>
@@ -625,16 +626,16 @@ export const AdminDashboard = () => {
                   <label className="block text-xs font-semibold text-deep mb-1.5 uppercase tracking-wider">
                     Загрузка файла с вашего компьютера
                   </label>
-                  <div className="relative border-2 border-dashed border-rose/30 hover:border-rose rounded-2xl p-6 text-center bg-cream-card/60 transition-all cursor-pointer group">
+                  <div className="relative border-2 border-dashed border-rose/30 hover:border-rose rounded-2xl p-5 text-center bg-cream-card/60 transition-all cursor-pointer group">
                     <input
                       type="file"
                       accept="video/*,image/*,application/pdf,.doc,.docx"
                       onChange={handleFileUpload}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     />
-                    <div className="space-y-2">
-                      <div className="w-12 h-12 rounded-2xl bg-rose-light text-rose mx-auto flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Upload className="w-6 h-6" />
+                    <div className="space-y-1.5">
+                      <div className="w-10 h-10 rounded-2xl bg-rose-light text-rose mx-auto flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Upload className="w-5 h-5" />
                       </div>
                       <p className="text-xs font-bold text-deep">
                         {fileUploading ? '⏳ Идет загрузка файла на сервер...' : 'Нажмите или перетащите файл сюда'}
@@ -645,7 +646,7 @@ export const AdminDashboard = () => {
                     </div>
                   </div>
                   {uploadedFileName && (
-                    <p className="text-xs text-emerald-700 font-semibold mt-2.5 flex items-center space-x-1.5 bg-emerald-50 p-3 rounded-xl border border-emerald-100">
+                    <p className="text-xs text-emerald-700 font-semibold mt-2 flex items-center space-x-1.5 bg-emerald-50 p-2.5 rounded-xl border border-emerald-100">
                       <Sparkles className="w-4 h-4 text-emerald-600 flex-shrink-0" />
                       <span className="truncate">Выбран файл: <strong>{uploadedFileName}</strong></span>
                     </p>
@@ -663,23 +664,26 @@ export const AdminDashboard = () => {
                   placeholder="Подробное описание к материалу и задания..."
                   value={lessonDesc}
                   onChange={(e) => setLessonDesc(e.target.value)}
-                  className="w-full px-4 py-3.5 rounded-2xl bg-white border border-cream-border text-deep text-sm placeholder-deep-light focus:outline-none focus:border-rose focus:ring-2 focus:ring-rose/20 transition-all"
+                  className="w-full px-4 py-3 rounded-2xl bg-white border border-cream-border text-deep text-sm placeholder-deep-light focus:outline-none focus:border-rose focus:ring-2 focus:ring-rose/20 transition-all resize-none"
                 />
               </div>
 
               {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={lessonSubmitLoading || fileUploading}
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-rose to-rose-hover text-white font-semibold text-sm shadow-rose hover:shadow-lg transition-all duration-200 disabled:opacity-50 mt-2"
-              >
-                {lessonSubmitLoading ? 'Сохранение...' : editingLesson ? 'Сохранить изменения' : 'Опубликовать и оповестить учеников'}
-              </button>
+              <div className="pt-2 pb-1">
+                <button
+                  type="submit"
+                  disabled={lessonSubmitLoading || fileUploading}
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose to-rose-hover text-white font-semibold text-sm shadow-rose hover:shadow-lg transition-all duration-200 disabled:opacity-50"
+                >
+                  {lessonSubmitLoading ? 'Сохранение...' : editingLesson ? 'Сохранить изменения' : 'Опубликовать и оповестить учеников'}
+                </button>
+              </div>
             </form>
 
           </div>
         </div>
       )}
+
 
     </div>
   );
