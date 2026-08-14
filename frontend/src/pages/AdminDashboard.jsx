@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/client';
-import { Shield, Users, BookOpen, Plus, Calendar, Clock, CheckCircle, XCircle, Trash2, Edit3, Sparkles, X, Link, Play, Upload, FileText, Truck } from 'lucide-react';
+import { Shield, Users, BookOpen, Plus, Calendar, Clock, CheckCircle, XCircle, Trash2, Edit3, Sparkles, X, Link, Play, Upload, FileText, Truck, Check } from 'lucide-react';
 
 
 export const AdminDashboard = () => {
@@ -10,6 +10,7 @@ export const AdminDashboard = () => {
   const [students, setStudents] = useState([]);
   const [studentsLoading, setStudentsLoading] = useState(true);
   const [accessModalStudent, setAccessModalStudent] = useState(null);
+  const [selectedStudentProgress, setSelectedStudentProgress] = useState(null); // Progress modal state
   const [selectedDuration, setSelectedDuration] = useState('30'); // '7', '30', '90', '365', 'unlimited', 'custom'
   const [customDays, setCustomDays] = useState('14');
   const [accessLoading, setAccessLoading] = useState(false);
@@ -423,6 +424,7 @@ export const AdminDashboard = () => {
                     <th className="py-4 px-6">Ученик</th>
                     <th className="py-4 px-6">Дата регистрации</th>
                     <th className="py-4 px-6">Текущий доступ</th>
+                    <th className="py-4 px-6">Прогресс</th>
                     <th className="py-4 px-6 text-right">Действия</th>
                   </tr>
                 </thead>
@@ -432,6 +434,10 @@ export const AdminDashboard = () => {
                     const isActive = access?.is_active;
                     const isUnlimited = access?.is_unlimited;
                     const days = access?.days_remaining;
+                    
+                    const completedCount = st.completed_lessons?.length || 0;
+                    const totalCount = lessons.length;
+                    const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
                     return (
                       <tr key={st.id} className="hover:bg-cream-card/30 transition-colors">
@@ -463,6 +469,21 @@ export const AdminDashboard = () => {
                               <span>Закрыт</span>
                             </span>
                           )}
+                        </td>
+
+                        <td className="py-4 px-6">
+                          <button
+                            onClick={() => setSelectedStudentProgress(st)}
+                            className="flex flex-col items-start group text-left"
+                            title="Посмотреть детальный прогресс"
+                          >
+                            <span className="text-xs font-bold text-deep group-hover:text-rose transition-colors">
+                              {completedCount} / {totalCount} уроков ({progressPct}%)
+                            </span>
+                            <div className="w-20 h-1.5 bg-cream-dark rounded-full overflow-hidden mt-1.5">
+                              <div className="h-full bg-rose rounded-full transition-all" style={{ width: `${progressPct}%` }} />
+                            </div>
+                          </button>
                         </td>
 
                         <td className="py-4 px-6 text-right">
@@ -1026,6 +1047,87 @@ export const AdminDashboard = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+
+      {/* --- STUDENT DETAILED PROGRESS ANALYTICS MODAL --- */}
+      {selectedStudentProgress && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-deep/60 backdrop-blur-md p-4 animate-fade-in">
+          <div className="bg-cream rounded-3xl max-w-md w-full p-6 shadow-2xl border border-cream-border space-y-6 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-cream-border pb-4">
+              <div>
+                <h3 className="font-serif text-lg font-bold text-deep">Детали обучения</h3>
+                <p className="text-xs text-deep-muted">{selectedStudentProgress.full_name}</p>
+              </div>
+              <button 
+                onClick={() => setSelectedStudentProgress(null)} 
+                className="p-1 rounded-full text-deep-muted hover:text-deep"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Overall Progress Stats */}
+            <div className="space-y-3 bg-white p-4 rounded-2xl border border-cream-border/60 shadow-sm">
+              <div className="flex items-center justify-between text-xs font-semibold text-deep">
+                <span className="uppercase tracking-wider">Пройдено материалов</span>
+                <span>
+                  {selectedStudentProgress.completed_lessons?.length || 0} из {lessons.length}
+                </span>
+              </div>
+              <div className="w-full h-2.5 bg-cream rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-rose to-rose-hover rounded-full transition-all duration-500" 
+                  style={{ 
+                    width: `${lessons.length > 0 ? Math.round(((selectedStudentProgress.completed_lessons?.length || 0) / lessons.length) * 100) : 0}%` 
+                  }} 
+                />
+              </div>
+              <p className="text-[11px] text-deep-muted text-center pt-0.5">
+                Процент выполнения программы: <strong className="text-deep">{lessons.length > 0 ? Math.round(((selectedStudentProgress.completed_lessons?.length || 0) / lessons.length) * 100) : 0}%</strong>
+              </p>
+            </div>
+
+            {/* List of Lessons with Completion Status */}
+            <div className="space-y-3 pt-2">
+              <h4 className="text-xs font-bold text-deep uppercase tracking-wider">История просмотров уроков</h4>
+              <div className="space-y-2 max-h-[42vh] overflow-y-auto pr-1">
+                {lessons.length === 0 ? (
+                  <p className="text-xs text-deep-muted text-center py-6">В программе пока нет уроков</p>
+                ) : (
+                  lessons.map((lesson) => {
+                    const completed = selectedStudentProgress.completed_lessons?.includes(lesson.id);
+                    return (
+                      <div 
+                        key={lesson.id} 
+                        className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between text-xs ${
+                          completed 
+                            ? 'bg-emerald-50/40 border-emerald-100/70 text-deep' 
+                            : 'bg-white border-cream-border text-deep-muted'
+                        }`}
+                      >
+                        <div className="min-w-0 pr-3">
+                          <p className="font-semibold text-deep truncate">{lesson.title}</p>
+                          <p className="text-[10px] text-deep-muted mt-0.5 font-medium">{lesson.module || 'Модуль 1'}</p>
+                        </div>
+                        {completed ? (
+                          <span className="flex-shrink-0 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200 flex items-center space-x-1">
+                            <Check className="w-3 h-3 stroke-[3.5]" />
+                            <span>Просмотрен</span>
+                          </span>
+                        ) : (
+                          <span className="flex-shrink-0 px-2.5 py-1 rounded-full bg-cream-dark text-deep-muted font-bold text-[10px] border border-cream-border">
+                            Не смотрел
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

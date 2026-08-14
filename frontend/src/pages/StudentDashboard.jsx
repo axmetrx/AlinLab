@@ -24,6 +24,10 @@ export const StudentDashboard = () => {
     try {
       const res = await api.get('/student/dashboard');
       setData(res.data);
+      if (res.data.completed_lesson_ids) {
+        setCompletedLessons(res.data.completed_lesson_ids);
+        localStorage.setItem('completed_lessons', JSON.stringify(res.data.completed_lesson_ids));
+      }
     } catch (err) {
       console.error('Error fetching student dashboard:', err);
     } finally {
@@ -86,11 +90,24 @@ export const StudentDashboard = () => {
     );
   }
 
-  const markLessonComplete = (lessonId) => {
-    if (!completedLessons.includes(lessonId)) {
-      const next = [...completedLessons, lessonId];
-      setCompletedLessons(next);
-      localStorage.setItem('completed_lessons', JSON.stringify(next));
+  const markLessonComplete = async (lessonId) => {
+    try {
+      await api.post(`/student/lessons/${lessonId}/complete`);
+      setCompletedLessons(prev => {
+        if (prev.includes(lessonId)) return prev;
+        const next = [...prev, lessonId];
+        localStorage.setItem('completed_lessons', JSON.stringify(next));
+        return next;
+      });
+    } catch (err) {
+      console.error('Failed to mark lesson complete on server:', err);
+      // Fallback
+      setCompletedLessons(prev => {
+        if (prev.includes(lessonId)) return prev;
+        const next = [...prev, lessonId];
+        localStorage.setItem('completed_lessons', JSON.stringify(next));
+        return next;
+      });
     }
   };
 

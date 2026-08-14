@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import User, Lesson, UserAccess, Notification, Supplier
+from app.models import User, Lesson, UserAccess, Notification, Supplier, UserLessonProgress
 from app.schemas import LessonResponse, NotificationResponse, AccessStatusResponse, SupplierResponse
 from app.auth import get_current_user
 
@@ -38,6 +38,7 @@ def check_user_access(user_id: int, db: Session) -> tuple[bool, bool, Optional[i
 def get_dashboard(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     is_active, is_unlimited, days_remaining, expires_at = check_user_access(current_user.id, db)
     
+    completed_lesson_ids = []
     lessons = []
     if is_active or current_user.role == "admin":
         lessons_raw = db.query(Lesson).order_by(Lesson.created_at.desc()).all()
@@ -60,6 +61,9 @@ def get_dashboard(current_user: User = Depends(get_current_user), db: Session = 
                 "module": l.module or "Модуль 1",
                 "created_at": l.created_at.isoformat() if l.created_at else None
             })
+        
+        progress_records = db.query(UserLessonProgress).filter(UserLessonProgress.user_id == current_user.id).all()
+        completed_lesson_ids = [p.lesson_id for p in progress_records]
     
     return {
         "access": {
@@ -68,7 +72,8 @@ def get_dashboard(current_user: User = Depends(get_current_user), db: Session = 
             "days_remaining": days_remaining if current_user.role != "admin" else None,
             "expires_at": expires_at.isoformat() if expires_at else None
         },
-        "lessons": lessons
+        "lessons": lessons,
+        "completed_lesson_ids": completed_lesson_ids
     }
 
 
@@ -103,4 +108,43 @@ def get_suppliers(current_user: User = Depends(get_current_user), db: Session = 
         raise HTTPException(status_code=403, detail="Доступ к материалам закрыт")
     
     return db.query(Supplier).order_by(Supplier.created_at.desc()).all()
+
+
+@router.post("/lessons/{lesson_id}/complete")
+def complete_lesson(lesson_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    is_active, _, _, _ = check_user_access(current_user.id, db)
+    if not is_active and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Доступ к материалам закрыт")
+
+    # Check if already completed
+    existing = db.query(UserLessonProgress).filter(
+        UserLessonProgress.user_id == current_user.id,
+        UserLessonProgress.lesson_id == lesson_id
+    ).first()
+    
+    if not existing:
+        progress = UserLessonProgress(user_id=current_user.id, lesson_id=lesson_id)
+        db.add(progress)
+        db.commit()
+    
+    return {"message": "Урок успешно завершен"}
+
+
+@router.post("/lessons/{lesson_id}/incomplete")
+def incomplete_lesson(lesson_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    is_active, _, _, _ = check_user_access(current_user.id, db)
+    if not is_active and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Доступ к материалам закрыт")
+
+    existing = db.query(UserLessonProgress).filter(
+        UserLessonProgress.user_id == current_user.id,
+        UserLessonProgress.lesson_id == lesson_id
+    ).first()
+    
+    if existing:
+        db.delete(existing)
+        db.commit()
+        
+    return {"message": "Урок отмечен как незавершенный"}
+
 

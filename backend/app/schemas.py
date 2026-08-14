@@ -137,3 +137,15 @@ class SupplierResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# --- Progress Schemas ---
+class ProgressCreate(BaseModel):
+    lesson_id: int
+
+class UserProgressResponse(BaseModel):
+    lesson_id: int
+    completed_at: datetime
+
+    class Config:
+        from_attributes = True

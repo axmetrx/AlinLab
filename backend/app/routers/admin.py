@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import User, Lesson, UserAccess, Notification, Supplier
+from app.models import User, Lesson, UserAccess, Notification, Supplier, UserLessonProgress
 from app.schemas import LessonCreate, LessonUpdate, LessonResponse, GrantAccessRequest, UserAccessResponse, SupplierCreate, SupplierUpdate, SupplierResponse
 from app.auth import get_admin_user
 
@@ -65,12 +65,16 @@ def get_students(admin: User = Depends(get_admin_user), db: Session = Depends(ge
                 "created_at": access.created_at.isoformat() if access.created_at else None
             }
         
+        progress_records = db.query(UserLessonProgress).filter(UserLessonProgress.user_id == user.id).all()
+        completed_lesson_ids = [p.lesson_id for p in progress_records]
+
         result.append({
             "id": user.id,
             "email": user.email,
             "full_name": user.full_name,
             "created_at": user.created_at.isoformat(),
-            "access": access_data
+            "access": access_data,
+            "completed_lessons": completed_lesson_ids
         })
     
     return result

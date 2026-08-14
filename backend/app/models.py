@@ -15,6 +15,7 @@ class User(Base):
 
     accesses = relationship("UserAccess", back_populates="user", cascade="all, delete-orphan")
     notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
+    progress = relationship("UserLessonProgress", back_populates="user", cascade="all, delete-orphan")
 
 
 class Lesson(Base):
@@ -66,4 +67,16 @@ class Supplier(Base):
     contacts = Column(Text, nullable=True)
     category = Column(String, default="supplier", nullable=False)  # "supplier" or "illiquid"
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+
+class UserLessonProgress(Base):
+    __tablename__ = "user_lesson_progress"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    lesson_id = Column(Integer, ForeignKey("lessons.id", ondelete="CASCADE"), nullable=False)
+    completed_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    user = relationship("User", back_populates="progress")
+    lesson = relationship("Lesson")
 
