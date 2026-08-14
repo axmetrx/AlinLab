@@ -154,7 +154,7 @@ export const LessonView = ({ lesson, onBack }) => {
       <div className="fixed bottom-20 md:bottom-6 left-0 right-0 px-5 z-30 max-w-lg mx-auto">
         <button
           onClick={onBack}
-          className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold text-[15px] shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center space-x-2"
+          className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#00A1FC] to-[#00DECC] text-white font-semibold text-[15px] shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center space-x-2"
         >
           <CheckCircle2 className="w-5 h-5" />
           <span>Завершить урок</span>

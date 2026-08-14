@@ -4,8 +4,8 @@
 
 @layer base {
   body {
-    background-color: #FDFBF7;
-    color: #4A3E3D;
+    background-color: #F8FAFC;
+    color: #0F172A;
   }
 }
 
@@ -16,16 +16,16 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #FDFBF7;
+  background: #F8FAFC;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #E6C9D4;
+  background: #CFFAFE;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #C48B9F;
+  background: #00A1FC;
 }
 
 /* Smooth modal animations */

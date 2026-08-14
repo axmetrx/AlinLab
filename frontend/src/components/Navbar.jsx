@@ -14,7 +14,7 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
           onClick={() => setActiveTab(user?.role === 'admin' ? 'admin' : 'courses')}
           className="flex items-center space-x-3 cursor-pointer group"
         >
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose to-rose-hover flex items-center justify-center text-white shadow-rose transition-transform group-hover:scale-105">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#00DECC] to-[#00A1FC] flex items-center justify-center text-white shadow-rose transition-transform group-hover:scale-105">
             <Sparkles className="w-5 h-5 animate-pulse" />
           </div>
           <div>

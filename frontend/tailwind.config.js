@@ -8,31 +8,35 @@ export default {
     extend: {
       colors: {
         cream: {
-          DEFAULT: '#FDFBF7',
-          card: '#F7F2EB',
-          dark: '#EFE7DC',
-          border: '#E5D9CC'
+          DEFAULT: '#F8FAFC', // clean background
+          card: '#FFFFFF', // white card
+          dark: '#F1F5F9', // light gray
+          border: '#E2E8F0' // clean border
         },
         rose: {
-          DEFAULT: '#C48B9F',
-          hover: '#A66B80',
-          light: '#F8EEF2',
-          subtle: '#E6C9D4',
-          dark: '#874D60'
+          DEFAULT: '#00A1FC', // blue
+          hover: '#008BE0', // darker blue
+          light: '#ECFEFF', // light cyan
+          subtle: '#CFFAFE', // cyan
+          dark: '#0369A1' // sky-700
         },
         deep: {
-          DEFAULT: '#4A3E3D',
-          muted: '#7C6E6D',
-          light: '#9E8F8E'
+          DEFAULT: '#0F172A', // slate-900
+          muted: '#475569', // slate-600
+          light: '#64748B' // slate-500
+        },
+        gradient: {
+          start: '#00A1FC',
+          end: '#00DECC'
         }
       },
       fontFamily: {
-        serif: ['Cormorant Garamond', 'Georgia', 'serif'],
+        serif: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
         sans: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        'soft': '0 10px 30px -10px rgba(196, 139, 159, 0.12), 0 4px 12px rgba(74, 62, 61, 0.03)',
-        'rose': '0 8px 24px -4px rgba(196, 139, 159, 0.35)',
+        'soft': '0 10px 30px -10px rgba(0, 161, 252, 0.1), 0 4px 12px rgba(15, 23, 42, 0.03)',
+        'rose': '0 8px 24px -4px rgba(0, 161, 252, 0.25)',
       }
     },
   },

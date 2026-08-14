@@ -96,7 +96,7 @@ export const StudentDashboard = () => {
     <div className="max-w-lg mx-auto bg-white min-h-[calc(100vh-64px)] animate-fade-in pb-28 md:pb-8">
 
       {/* Course Banner */}
-      <div className="w-full aspect-[16/9] bg-gradient-to-br from-rose/30 via-cream-dark to-rose-light relative overflow-hidden">
+      <div className="w-full aspect-[16/9] bg-gradient-to-tr from-[#00DECC] to-[#00A1FC] relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center">
             <div className="w-20 h-20 mx-auto rounded-full bg-white shadow-lg flex items-center justify-center mb-3">
@@ -123,21 +123,21 @@ export const StudentDashboard = () => {
           <span className="text-[11px] font-semibold text-rose-dark bg-rose-light px-3 py-1 rounded-full">
             Курс
           </span>
-          <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full">
+          <span className="text-[11px] font-semibold text-rose-dark bg-rose-light px-3 py-1 rounded-full">
             Активный
           </span>
         </div>
       </div>
 
       {/* Progress Section */}
-      <div className="mx-5 bg-cream rounded-2xl p-4 space-y-3">
+      <div className="mx-5 bg-cream-dark rounded-2xl p-4 space-y-3">
         {/* Progress bar */}
         <div className="flex items-center justify-between text-[13px]">
           <span className="text-deep font-medium">0 из {lessons.length} уроков</span>
           <span className="text-deep-muted font-semibold">0%</span>
         </div>
         <div className="w-full h-2 bg-cream-border rounded-full overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-500" style={{ width: '0%' }} />
+          <div className="h-full bg-gradient-to-r from-[#00A1FC] to-[#00DECC] rounded-full transition-all duration-500" style={{ width: '0%' }} />
         </div>
 
         {/* Access info */}
@@ -175,10 +175,10 @@ export const StudentDashboard = () => {
                 <button
                   key={lesson.id}
                   onClick={() => setSelectedLesson(lesson)}
-                  className="w-full flex items-center px-5 py-3.5 hover:bg-cream/60 active:bg-cream transition-colors text-left group"
+                  className="w-full flex items-center px-5 py-3.5 hover:bg-cream-dark/40 active:bg-cream-dark transition-colors text-left group"
                 >
                   {/* Lesson icon */}
-                  <div className="w-9 h-9 rounded-xl bg-cream flex items-center justify-center flex-shrink-0 mr-3.5 group-hover:bg-rose-light transition-colors">
+                  <div className="w-9 h-9 rounded-xl bg-cream-dark flex items-center justify-center flex-shrink-0 mr-3.5 group-hover:bg-rose-light transition-colors">
                     {getLessonIcon(lType)}
                   </div>
 
@@ -208,7 +208,7 @@ export const StudentDashboard = () => {
         <div className="fixed bottom-20 md:bottom-6 left-0 right-0 px-5 z-30 max-w-lg mx-auto">
           <button
             onClick={() => setSelectedLesson(lessons[0])}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold text-[15px] shadow-lg hover:shadow-xl active:scale-[0.98] transition-all"
+            className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#00A1FC] to-[#00DECC] text-white font-semibold text-[15px] shadow-lg hover:shadow-xl active:scale-[0.98] transition-all"
           >
             Продолжить обучение
           </button>
