@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { LessonView } from '../components/LessonView';
-import { Calendar, Play, Lock, Sparkles, BookOpen, FileText, Images, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Calendar, Play, Lock, Sparkles, BookOpen, FileText, Images, ChevronRight, ChevronLeft, Check } from 'lucide-react';
 
 export const StudentDashboard = () => {
   const { user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedLesson, setSelectedLesson] = useState(null);
+  const [activeCourse, setActiveCourse] = useState(false); // Controls landing screen vs module details
 
   const fetchDashboard = async () => {
     try {
@@ -91,31 +92,109 @@ export const StudentDashboard = () => {
 
   const expiryDate = formatExpiryDate();
 
-  // MAIN COURSE VIEW
-  return (
-    <div className="max-w-lg mx-auto bg-white min-h-[calc(100vh-64px)] animate-fade-in pb-28 md:pb-8">
-
-      {/* Course Banner */}
-      <div className="w-full aspect-[16/9] bg-gradient-to-tr from-[#00DECC] to-[#00A1FC] relative overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-20 h-20 mx-auto rounded-full bg-white shadow-lg flex items-center justify-center mb-3">
-              <Sparkles className="w-8 h-8 text-rose" />
+  // SCREEN 1: My Courses Landing (when activeCourse is false)
+  if (!activeCourse) {
+    return (
+      <div className="max-w-lg mx-auto bg-cream-card min-h-[calc(100vh-64px)] animate-fade-in pb-24 md:pb-8 flex flex-col">
+        {/* Cover Photo */}
+        <div className="w-full aspect-[16/9] relative overflow-visible">
+          <img 
+            src="/course_cover.jpg" 
+            alt="Okademalin Cover" 
+            className="w-full h-full object-cover"
+          />
+          {/* Logo avatar container overlapping the banner */}
+          <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 z-10">
+            <div className="w-20 h-20 rounded-full border-4 border-white bg-gradient-to-tr from-[#00DECC] to-[#00A1FC] flex items-center justify-center text-white font-bold text-xl shadow-md">
+              Ok
             </div>
-            <h2 className="text-xl font-bold text-deep tracking-wide">Okademalin</h2>
           </div>
         </div>
-        {/* Decorative wave */}
-        <svg className="absolute bottom-0 left-0 w-full" viewBox="0 0 400 30" preserveAspectRatio="none">
-          <path d="M0,30 L0,15 Q100,0 200,15 Q300,30 400,15 L400,30 Z" fill="white" />
-        </svg>
+
+        {/* Profile Details */}
+        <div className="text-center mt-12 px-5">
+          <div className="flex items-center justify-center space-x-1">
+            <h1 className="text-xl font-bold text-deep">Okademalin</h1>
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#00A1FC] text-white">
+              <Check className="w-3 h-3 stroke-[3]" />
+            </span>
+          </div>
+          <p className="text-xs text-deep-muted mt-1 font-medium">by Okademalin Team</p>
+        </div>
+
+        {/* Courses Section */}
+        <div className="px-5 mt-8 flex-1">
+          <h3 className="text-[15px] font-bold text-deep mb-4 text-left">Мои курсы</h3>
+
+          {/* Clickable Course Card */}
+          <button
+            onClick={() => setActiveCourse(true)}
+            className="w-full bg-white rounded-3xl border border-cream-border overflow-hidden shadow-soft hover:shadow-md active:scale-[0.99] transition-all text-left flex flex-col"
+          >
+            {/* Card Thumbnail */}
+            <div className="w-full aspect-[16/9]">
+              <img 
+                src="/course_cover.jpg" 
+                alt="Okademalin Course" 
+                className="w-full h-full object-cover"
+              />
+            </div>
+            {/* Card Content */}
+            <div className="p-5 space-y-3">
+              <div>
+                <h4 className="text-[16px] font-bold text-deep">Okademalin</h4>
+                <p className="text-[12px] text-deep-muted mt-1 leading-snug">
+                  Учебный курс по развитию и освоению профессиональных навыков.
+                </p>
+              </div>
+
+              {/* Progress bar */}
+              <div className="space-y-1.5 pt-1">
+                <div className="w-full h-1.5 bg-cream-dark rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-[#00A1FC] to-[#00DECC] rounded-full" style={{ width: '0%' }} />
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-deep-muted">
+                  <span>0/{lessons.length} уроков</span>
+                  <span>0%</span>
+                </div>
+              </div>
+            </div>
+          </button>
+        </div>
+
+        {/* Branding Footer */}
+        <div className="text-center py-6 text-[11px] text-deep-light">
+          Сделано на 1Study
+        </div>
+      </div>
+    );
+  }
+
+  // SCREEN 2: Course Modules & Lessons Detail (when activeCourse is true)
+  return (
+    <div className="max-w-lg mx-auto bg-white min-h-[calc(100vh-64px)] animate-fade-in pb-28 md:pb-8 relative">
+      
+      {/* Course Banner */}
+      <div className="w-full aspect-[16/9] relative overflow-hidden">
+        <img 
+          src="/course_cover.jpg" 
+          alt="Okademalin Cover" 
+          className="w-full h-full object-cover"
+        />
+        {/* Back navigation button overlayed */}
+        <button
+          onClick={() => setActiveCourse(false)}
+          className="absolute top-4 left-4 p-2 bg-black/40 hover:bg-black/60 text-white backdrop-blur-md rounded-full transition-colors z-10"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Course Info */}
-      <div className="px-5 pt-2 pb-4">
+      <div className="px-5 pt-4 pb-4">
         <h1 className="text-lg font-bold text-deep">Okademalin</h1>
         <p className="text-[13px] text-deep-muted leading-snug mt-1">
-          Онлайн-платформа обучения
+          Система, которая превращает обучение в удобный и эффективный процесс
         </p>
 
         {/* Tags */}
@@ -130,13 +209,13 @@ export const StudentDashboard = () => {
       </div>
 
       {/* Progress Section */}
-      <div className="mx-5 bg-cream-dark rounded-2xl p-4 space-y-3">
+      <div className="mx-5 bg-cream rounded-2xl p-4 space-y-3 border border-cream-border">
         {/* Progress bar */}
         <div className="flex items-center justify-between text-[13px]">
           <span className="text-deep font-medium">0 из {lessons.length} уроков</span>
           <span className="text-deep-muted font-semibold">0%</span>
         </div>
-        <div className="w-full h-2 bg-cream-border rounded-full overflow-hidden">
+        <div className="w-full h-2 bg-cream-dark rounded-full overflow-hidden">
           <div className="h-full bg-gradient-to-r from-[#00A1FC] to-[#00DECC] rounded-full transition-all duration-500" style={{ width: '0%' }} />
         </div>
 
@@ -169,7 +248,6 @@ export const StudentDashboard = () => {
           <div className="divide-y divide-cream-border">
             {lessons.map((lesson, index) => {
               const lType = lesson.lesson_type || 'video';
-              const isLast = index === lessons.length - 1;
 
               return (
                 <button
@@ -178,7 +256,7 @@ export const StudentDashboard = () => {
                   className="w-full flex items-center px-5 py-3.5 hover:bg-cream-dark/40 active:bg-cream-dark transition-colors text-left group"
                 >
                   {/* Lesson icon */}
-                  <div className="w-9 h-9 rounded-xl bg-cream-dark flex items-center justify-center flex-shrink-0 mr-3.5 group-hover:bg-rose-light transition-colors">
+                  <div className="w-9 h-9 rounded-xl bg-cream flex items-center justify-center flex-shrink-0 mr-3.5 group-hover:bg-rose-light transition-colors">
                     {getLessonIcon(lType)}
                   </div>
 

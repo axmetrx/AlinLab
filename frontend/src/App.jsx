@@ -32,7 +32,7 @@ const MainLayout = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-cream text-deep">
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
+      {user.role === 'admin' && <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />}
 
       <main className="flex-1">
         {activeTab === 'admin' && user.role === 'admin' && <AdminDashboard />}
