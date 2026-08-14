@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, Play, FileText, Images, ChevronRight, Download, ExternalLink, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, FileText, Images, Download, ExternalLink, CheckCircle2 } from 'lucide-react';
 
 export const LessonView = ({ lesson, onBack }) => {
   const type = lesson.lesson_type || 'video';
@@ -28,41 +28,30 @@ export const LessonView = ({ lesson, onBack }) => {
   const isDirectVideo = lesson.video_url?.match(/\.(mp4|webm|mov|m4v)(\?|$)/i);
   const isDataUrl = lesson.video_url?.startsWith('data:');
 
-  // Scroll to top when lesson opens
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
   return (
-    <div className="w-full bg-cream min-h-[calc(100vh-64px)] animate-fade-in flex flex-col pb-24 md:pb-12">
-      
-      {/* Top Header with Back Button */}
-      <div className="sticky top-0 z-20 bg-cream/90 backdrop-blur-md border-b border-cream-border px-4 py-3 flex items-center shadow-sm">
+    <div className="max-w-lg mx-auto bg-white min-h-[calc(100vh-64px)] animate-fade-in pb-28 md:pb-8">
+
+      {/* Top Header */}
+      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-cream-border px-4 py-3 flex items-center">
         <button
           onClick={onBack}
-          className="flex items-center text-deep-muted hover:text-deep transition-colors mr-3 bg-white/50 p-1.5 rounded-xl border border-cream-border"
+          className="p-1.5 rounded-xl hover:bg-cream transition-colors mr-3"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className="w-5 h-5 text-deep" />
         </button>
-        <div className="min-w-0 flex-1">
-          <h2 className="font-serif text-lg font-bold text-deep truncate leading-tight">
-            {lesson.title}
-          </h2>
-          <p className="text-[11px] text-deep-muted">
-            {type === 'video' && 'Видеоурок'}
-            {type === 'file' && 'Материал для скачивания'}
-            {type === 'gallery' && `Галерея (${galleryList.length} фото)`}
-          </p>
-        </div>
+        <h2 className="text-[15px] font-bold text-deep truncate flex-1 text-center pr-8">
+          {lesson.title}
+        </h2>
       </div>
 
-      {/* Media Viewer Area */}
-      <div className="w-full bg-black flex flex-col items-center justify-center relative shadow-inner"
-           style={{ minHeight: type !== 'video' ? '300px' : 'auto' }}
-      >
-        {/* TYPE 1: VIDEO */}
+      {/* Video / Media Area */}
+      <div className="w-full bg-black">
         {type === 'video' && (
-          <div className="w-full w-full max-w-5xl mx-auto aspect-video relative flex items-center justify-center">
+          <div className="w-full aspect-video relative">
             {isDirectVideo || isDataUrl ? (
               <video 
                 src={lesson.video_url} 
@@ -82,11 +71,11 @@ export const LessonView = ({ lesson, onBack }) => {
                 loading="lazy"
               />
             ) : (
-              <div className="text-white text-center p-8">
-                <Play className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p className="text-sm">Видео недоступно</p>
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
+                <Play className="w-10 h-10 opacity-40 mb-2" />
+                <p className="text-sm opacity-60">Видео недоступно</p>
                 {lesson.video_url && (
-                  <a href={lesson.video_url} target="_blank" rel="noreferrer" className="text-rose-light underline text-sm mt-2 inline-block">
+                  <a href={lesson.video_url} target="_blank" rel="noreferrer" className="text-rose-light underline text-sm mt-2">
                     Открыть ссылку
                   </a>
                 )}
@@ -95,84 +84,83 @@ export const LessonView = ({ lesson, onBack }) => {
           </div>
         )}
 
-        {/* TYPE 2: FILE */}
-        {type === 'file' && (
-          <div className="w-full h-full bg-cream-card/10 flex flex-col items-center justify-center py-16 px-4 text-center space-y-4 text-white">
-            <div className="w-20 h-20 rounded-3xl bg-white/10 flex items-center justify-center shadow-inner">
-              <FileText className="w-10 h-10" />
-            </div>
-            <div>
-              <h4 className="font-serif text-xl sm:text-2xl font-bold mb-1 px-4">{lesson.title}</h4>
-              <p className="text-xs text-white/60 max-w-md mx-auto">Вложенный документ / учебный файл</p>
-            </div>
-            {lesson.video_url && (
-              <a
-                href={lesson.video_url}
-                target="_blank"
-                rel="noreferrer"
-                className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-rose to-rose-hover text-white font-semibold text-sm shadow-rose hover:shadow-lg transition-all flex items-center space-x-2 mt-4"
-              >
-                <Download className="w-4 h-4" />
-                <span>Открыть / Скачать файл</span>
-                <ExternalLink className="w-3.5 h-3.5 opacity-80" />
-              </a>
-            )}
-          </div>
-        )}
-
-        {/* TYPE 3: GALLERY */}
         {type === 'gallery' && (
           galleryList.length > 0 ? (
-            <div className="relative w-full max-w-5xl mx-auto h-[40vh] sm:h-[60vh] flex items-center justify-center bg-black overflow-hidden">
+            <div className="relative w-full aspect-square flex items-center justify-center overflow-hidden">
               <img
                 src={galleryList[currentSlide]}
                 alt={`Slide ${currentSlide + 1}`}
                 className="w-full h-full object-contain transition-all duration-300"
               />
-              
-              {/* Carousel Controls */}
               {galleryList.length > 1 && (
                 <>
                   <button
                     onClick={() => setCurrentSlide(prev => prev === 0 ? galleryList.length - 1 : prev - 1)}
-                    className="absolute left-2 sm:left-4 p-2 sm:p-3 rounded-full bg-deep/50 hover:bg-deep text-white backdrop-blur-md transition-all z-10"
+                    className="absolute left-2 p-2 rounded-full bg-black/40 text-white backdrop-blur-sm"
                   >
-                    <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <ChevronLeft className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => setCurrentSlide(prev => prev === galleryList.length - 1 ? 0 : prev + 1)}
-                    className="absolute right-2 sm:right-4 p-2 sm:p-3 rounded-full bg-deep/50 hover:bg-deep text-white backdrop-blur-md transition-all z-10"
+                    className="absolute right-2 p-2 rounded-full bg-black/40 text-white backdrop-blur-sm"
                   >
-                    <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <ChevronRight className="w-5 h-5" />
                   </button>
-                  <div className="absolute bottom-3 bg-black/60 backdrop-blur-md text-white text-xs px-3 py-1 rounded-full font-semibold z-10">
+                  <div className="absolute bottom-3 bg-black/50 text-white text-xs px-3 py-1 rounded-full">
                     {currentSlide + 1} / {galleryList.length}
                   </div>
                 </>
               )}
             </div>
           ) : (
-            <div className="text-white text-sm text-center py-16">
-              <Images className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>В галерею пока не добавлены фотографии.</p>
+            <div className="w-full py-16 flex flex-col items-center justify-center text-white">
+              <Images className="w-10 h-10 opacity-40 mb-2" />
+              <p className="text-sm opacity-60">Нет фотографий</p>
             </div>
           )
         )}
       </div>
 
-      {/* Description Area */}
-      <div className="flex-1 bg-cream px-4 sm:px-6 md:px-8 py-6 max-w-5xl w-full mx-auto">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-rose-dark mb-3 flex items-center space-x-1.5">
-          <Sparkles className="w-4 h-4" />
-          <span>Описание материала</span>
-        </h4>
-        <div className="bg-white border border-cream-border p-5 rounded-2xl sm:rounded-3xl shadow-sm">
-          <p className="text-[13px] sm:text-sm text-deep leading-relaxed whitespace-pre-line">
-            {lesson.description || 'Описание к данному материалу не добавлено администратором.'}
-          </p>
+      {/* File download card */}
+      {type === 'file' && lesson.video_url && (
+        <div className="mx-5 mt-5">
+          <a
+            href={lesson.video_url}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center p-4 bg-cream rounded-2xl border border-cream-border hover:bg-cream-dark transition-colors group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-rose-light flex items-center justify-center flex-shrink-0 mr-3">
+              <FileText className="w-5 h-5 text-rose-dark" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[14px] font-semibold text-deep truncate">{lesson.title}</p>
+              <p className="text-[11px] text-deep-muted">Нажмите для скачивания</p>
+            </div>
+            <Download className="w-4 h-4 text-deep-muted group-hover:text-rose transition-colors flex-shrink-0" />
+          </a>
         </div>
+      )}
+
+      {/* Description */}
+      <div className="px-5 pt-5 pb-4">
+        <h3 className="text-[15px] font-bold text-deep mb-2">{lesson.title}</h3>
+        <p className="text-[13px] text-deep-muted leading-relaxed whitespace-pre-line">
+          {lesson.description || 'Описание не добавлено.'}
+        </p>
       </div>
-      
+
+      {/* Bottom Action */}
+      <div className="fixed bottom-20 md:bottom-6 left-0 right-0 px-5 z-30 max-w-lg mx-auto">
+        <button
+          onClick={onBack}
+          className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold text-[15px] shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center space-x-2"
+        >
+          <CheckCircle2 className="w-5 h-5" />
+          <span>Завершить урок</span>
+        </button>
+      </div>
+
     </div>
   );
 };

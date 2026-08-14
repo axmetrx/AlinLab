@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { LessonView } from '../components/LessonView';
-import { Clock, Play, Lock, Sparkles, BookOpen, FileText, Images, ShieldCheck } from 'lucide-react';
+import { Calendar, Play, Lock, Sparkles, BookOpen, FileText, Images, ChevronRight, CheckCircle2 } from 'lucide-react';
 
 export const StudentDashboard = () => {
   const { user } = useAuth();
@@ -28,8 +28,8 @@ export const StudentDashboard = () => {
   if (loading) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-4">
-        <div className="w-12 h-12 rounded-full border-4 border-rose-light border-t-rose animate-spin" />
-        <p className="text-sm text-deep-muted font-medium">Загрузка материалов...</p>
+        <div className="w-10 h-10 rounded-full border-3 border-rose-light border-t-rose animate-spin" />
+        <p className="text-sm text-deep-muted font-medium">Загрузка...</p>
       </div>
     );
   }
@@ -37,177 +37,181 @@ export const StudentDashboard = () => {
   const access = data?.access || { is_active: false };
   const lessons = data?.lessons || [];
 
-  // STUB SCREEN: Access Is Closed / Pending
+  // ACCESS CLOSED
   if (!access.is_active) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-12 text-center animate-fade-in">
-        <div className="bg-cream-card/90 border border-cream-border rounded-3xl p-8 sm:p-12 shadow-soft relative overflow-hidden">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-rose-light text-rose-dark flex items-center justify-center shadow-inner">
-            <Lock className="w-10 h-10 stroke-[1.75]" />
+      <div className="max-w-lg mx-auto px-4 py-16 text-center animate-fade-in">
+        <div className="bg-white border border-cream-border rounded-2xl p-8 shadow-soft">
+          <div className="w-16 h-16 mx-auto mb-5 rounded-full bg-cream-dark flex items-center justify-center">
+            <Lock className="w-7 h-7 text-deep-muted" />
           </div>
-
-          <span className="inline-block px-4 py-1.5 rounded-full bg-rose-light text-rose-dark text-xs font-semibold uppercase tracking-wider mb-4">
-            Статус: Ожидание
-          </span>
-
-          <h2 className="font-serif text-xl sm:text-3xl font-bold text-deep mb-4 max-w-xl mx-auto leading-relaxed">
-            Доступ к урокам пока закрыт
-          </h2>
-
-          <p className="text-sm text-deep-muted max-w-lg mx-auto leading-relaxed mb-8">
-            Ожидайте активации от администратора. Как только доступ будет открыт, вы получите оповещение.
+          <h2 className="text-xl font-bold text-deep mb-2">Доступ закрыт</h2>
+          <p className="text-sm text-deep-muted leading-relaxed mb-6">
+            Ожидайте активации от администратора. Вы получите уведомление.
           </p>
-
-          <div className="p-4 rounded-2xl bg-white border border-cream-border max-w-md mx-auto flex items-center space-x-3 text-left">
-            <div className="w-10 h-10 rounded-full bg-rose/10 text-rose flex items-center justify-center flex-shrink-0">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-deep">Совет по обучению</p>
-              <p className="text-xs text-deep-muted">Подготовьте блокнот и выделите тихие 30 минут в день для лекций.</p>
-            </div>
+          <div className="p-3 rounded-xl bg-cream flex items-center space-x-3 text-left">
+            <Sparkles className="w-5 h-5 text-rose flex-shrink-0" />
+            <p className="text-xs text-deep-muted">Подготовьте блокнот для заметок к урокам.</p>
           </div>
         </div>
       </div>
     );
   }
 
-  const getTypeIcon = (lType) => {
-    if (lType === 'file') return <FileText className="w-5 h-5 sm:w-6 sm:h-6" />;
-    if (lType === 'gallery') return <Images className="w-5 h-5 sm:w-6 sm:h-6" />;
-    return <Play className="w-5 h-5 sm:w-6 sm:h-6 fill-current ml-0.5" />;
-  };
-
-  const getTypeLabel = (lType) => {
-    if (lType === 'file') return 'Файл';
-    if (lType === 'gallery') return 'Галерея';
-    return 'Видео';
-  };
-
-  const getActionLabel = (lType) => {
-    if (lType === 'file') return 'Открыть';
-    if (lType === 'gallery') return 'Смотреть';
-    return 'Смотреть';
-  };
-
-  // ACTIVE ACCESS SCREEN: Lessons Grid or Lesson View
+  // LESSON VIEW
   if (selectedLesson) {
     return <LessonView lesson={selectedLesson} onBack={() => setSelectedLesson(null)} />;
   }
 
+  const getLessonIcon = (lType) => {
+    if (lType === 'file') return <FileText className="w-[18px] h-[18px] text-deep-muted" />;
+    if (lType === 'gallery') return <Images className="w-[18px] h-[18px] text-deep-muted" />;
+    return <Play className="w-[18px] h-[18px] text-deep-muted fill-deep-muted" />;
+  };
+
+  // Format access expiry
+  const formatExpiry = () => {
+    if (access.is_unlimited) return 'Бессрочный доступ';
+    if (access.days_remaining) {
+      const d = access.days_remaining;
+      const word = d === 1 ? 'день' : d < 5 ? 'дня' : 'дней';
+      return `Осталось ${d} ${word}`;
+    }
+    return '';
+  };
+
+  const formatExpiryDate = () => {
+    if (access.is_unlimited) return null;
+    if (access.expires_at) {
+      const date = new Date(access.expires_at);
+      return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+    return null;
+  };
+
+  const expiryDate = formatExpiryDate();
+
+  // MAIN COURSE VIEW
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-24 md:pb-12 animate-fade-in space-y-6">
-      
-      {/* Access Status Banner */}
-      <div className="bg-cream-card border border-cream-border rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-soft">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-rose to-rose-hover text-white flex items-center justify-center shadow-rose flex-shrink-0">
-              <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h1 className="font-serif text-lg sm:text-2xl font-bold text-deep">
-                  Ваши Уроки
-                </h1>
-                <span className="bg-emerald-100 text-emerald-700 text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold">
-                  Активен
-                </span>
-              </div>
-              <p className="text-[11px] sm:text-xs text-deep-muted mt-0.5">
-                Слушатель: <span className="font-semibold text-deep">{user?.full_name}</span>
-              </p>
-            </div>
-          </div>
+    <div className="max-w-lg mx-auto bg-white min-h-[calc(100vh-64px)] animate-fade-in pb-28 md:pb-8">
 
-          {/* Timer Badge */}
-          <div className="bg-white/90 border border-cream-border px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl sm:rounded-2xl shadow-sm flex items-center space-x-3 w-full sm:w-auto">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-rose-light text-rose-dark flex items-center justify-center flex-shrink-0">
-              <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+      {/* Course Banner */}
+      <div className="w-full aspect-[16/9] bg-gradient-to-br from-rose/30 via-cream-dark to-rose-light relative overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-20 h-20 mx-auto rounded-full bg-white shadow-lg flex items-center justify-center mb-3">
+              <Sparkles className="w-8 h-8 text-rose" />
             </div>
-            <div>
-              <p className="text-[10px] sm:text-[11px] text-deep-muted uppercase font-bold tracking-wider">Доступ</p>
-              <p className="text-xs sm:text-sm font-bold text-rose-dark">
-                {access.is_unlimited ? (
-                  <span>Бессрочный</span>
-                ) : (
-                  <span>Ещё <strong className="text-deep font-extrabold">{access.days_remaining}</strong> {access.days_remaining === 1 ? 'день' : access.days_remaining < 5 ? 'дня' : 'дней'}</span>
-                )}
-              </p>
-            </div>
+            <h2 className="text-xl font-bold text-deep tracking-wide">Okademalin</h2>
           </div>
+        </div>
+        {/* Decorative wave */}
+        <svg className="absolute bottom-0 left-0 w-full" viewBox="0 0 400 30" preserveAspectRatio="none">
+          <path d="M0,30 L0,15 Q100,0 200,15 Q300,30 400,15 L400,30 Z" fill="white" />
+        </svg>
+      </div>
+
+      {/* Course Info */}
+      <div className="px-5 pt-2 pb-4">
+        <h1 className="text-lg font-bold text-deep">Okademalin</h1>
+        <p className="text-[13px] text-deep-muted leading-snug mt-1">
+          Онлайн-платформа обучения
+        </p>
+
+        {/* Tags */}
+        <div className="flex items-center space-x-2 mt-3">
+          <span className="text-[11px] font-semibold text-rose-dark bg-rose-light px-3 py-1 rounded-full">
+            Курс
+          </span>
+          <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full">
+            Активный
+          </span>
         </div>
       </div>
 
-      {/* Lessons Count */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-serif text-lg sm:text-2xl font-bold text-deep">
-            Программа обучения
-          </h2>
-          <p className="text-[11px] sm:text-xs text-deep-muted">Нажмите на урок для просмотра</p>
+      {/* Progress Section */}
+      <div className="mx-5 bg-cream rounded-2xl p-4 space-y-3">
+        {/* Progress bar */}
+        <div className="flex items-center justify-between text-[13px]">
+          <span className="text-deep font-medium">0 из {lessons.length} уроков</span>
+          <span className="text-deep-muted font-semibold">0%</span>
         </div>
-        <span className="text-[11px] sm:text-xs font-semibold text-rose-dark bg-rose-light px-3 py-1 rounded-full">
-          {lessons.length} {lessons.length === 1 ? 'урок' : lessons.length < 5 ? 'урока' : 'уроков'}
-        </span>
+        <div className="w-full h-2 bg-cream-border rounded-full overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-500" style={{ width: '0%' }} />
+        </div>
+
+        {/* Access info */}
+        {(expiryDate || access.is_unlimited) && (
+          <div className="flex items-center justify-between text-[12px] text-deep-muted pt-1">
+            <div className="flex items-center space-x-1.5">
+              <Calendar className="w-3.5 h-3.5" />
+              <span>{access.is_unlimited ? 'Бессрочный доступ' : `Доступ до ${expiryDate}`}</span>
+            </div>
+            {!access.is_unlimited && (
+              <span className="font-semibold text-rose-dark">{formatExpiry()}</span>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Lessons Cards Grid */}
-      {lessons.length === 0 ? (
-        <div className="text-center py-12 bg-cream-card rounded-3xl border border-cream-border">
-          <BookOpen className="w-12 h-12 text-rose mx-auto mb-3 opacity-60" />
-          <p className="text-sm font-semibold text-deep">Материалы пока добавляются</p>
-          <p className="text-xs text-deep-muted mt-1">Скоро администратор опубликует первые уроки.</p>
+      {/* Lessons List */}
+      <div className="mt-6">
+        <div className="px-5 mb-3">
+          <h3 className="text-[15px] font-bold text-deep">Программа обучения</h3>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {lessons.map((lesson, index) => {
-            const lType = lesson.lesson_type || 'video';
 
-            return (
-              <div
-                key={lesson.id}
-                onClick={() => setSelectedLesson(lesson)}
-                className="bg-cream-card border border-cream-border rounded-2xl sm:rounded-3xl overflow-hidden shadow-soft hover:shadow-xl active:scale-[0.98] transition-all duration-200 group cursor-pointer flex flex-col"
-              >
-                {/* Thumbnail Area */}
-                <div className="relative aspect-[16/10] bg-deep/5 overflow-hidden flex items-center justify-center">
-                  <div className="absolute inset-0 bg-gradient-to-t from-deep/50 via-transparent to-transparent opacity-60 group-hover:opacity-30 transition-opacity" />
-                  
-                  {/* Play / Open Icon */}
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/90 text-rose-dark flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:bg-rose group-hover:text-white transition-all duration-300 relative z-10">
-                    {getTypeIcon(lType)}
+        {lessons.length === 0 ? (
+          <div className="text-center py-10 px-5">
+            <BookOpen className="w-10 h-10 text-deep-light mx-auto mb-2" />
+            <p className="text-sm text-deep-muted">Уроки скоро появятся</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-cream-border">
+            {lessons.map((lesson, index) => {
+              const lType = lesson.lesson_type || 'video';
+              const isLast = index === lessons.length - 1;
+
+              return (
+                <button
+                  key={lesson.id}
+                  onClick={() => setSelectedLesson(lesson)}
+                  className="w-full flex items-center px-5 py-3.5 hover:bg-cream/60 active:bg-cream transition-colors text-left group"
+                >
+                  {/* Lesson icon */}
+                  <div className="w-9 h-9 rounded-xl bg-cream flex items-center justify-center flex-shrink-0 mr-3.5 group-hover:bg-rose-light transition-colors">
+                    {getLessonIcon(lType)}
                   </div>
 
-                  <span className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 bg-cream/90 backdrop-blur-md text-deep text-[11px] sm:text-xs px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full font-semibold">
-                    #{index + 1} • {getTypeLabel(lType)}
-                  </span>
-                </div>
+                  {/* Lesson info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[14px] font-medium text-deep truncate leading-snug">
+                      {lesson.title}
+                    </p>
+                    {lesson.description && (
+                      <p className="text-[11px] text-deep-muted truncate mt-0.5">
+                        {lesson.description}
+                      </p>
+                    )}
+                  </div>
 
-                {/* Content */}
-                <div className="p-4 sm:p-6 flex-1">
-                  <h3 className="font-serif text-base sm:text-lg font-bold text-deep group-hover:text-rose transition-colors line-clamp-2 mb-1.5">
-                    {lesson.title}
-                  </h3>
-                  <p className="text-[11px] sm:text-xs text-deep-muted line-clamp-2 leading-relaxed">
-                    {lesson.description || 'Описание к уроку отсутствует.'}
-                  </p>
-                </div>
+                  {/* Arrow */}
+                  <ChevronRight className="w-4.5 h-4.5 text-deep-light flex-shrink-0 ml-2 group-hover:text-rose transition-colors" />
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
-                {/* Footer */}
-                <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-cream-border/60 bg-white/50 flex items-center justify-between">
-                  <span className="text-[10px] sm:text-[11px] text-deep-muted flex items-center space-x-1 font-semibold">
-                    <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose" />
-                    <span>{getTypeLabel(lType)}</span>
-                  </span>
-                  <span className="text-[11px] sm:text-xs font-semibold text-rose group-hover:translate-x-1 transition-transform flex items-center space-x-1">
-                    <span>{getActionLabel(lType)}</span>
-                    <Play className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-rose" />
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+      {/* Sticky Bottom Button */}
+      {lessons.length > 0 && (
+        <div className="fixed bottom-20 md:bottom-6 left-0 right-0 px-5 z-30 max-w-lg mx-auto">
+          <button
+            onClick={() => setSelectedLesson(lessons[0])}
+            className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold text-[15px] shadow-lg hover:shadow-xl active:scale-[0.98] transition-all"
+          >
+            Продолжить обучение
+          </button>
         </div>
       )}
 
