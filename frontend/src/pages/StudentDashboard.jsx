@@ -247,7 +247,7 @@ export const StudentDashboard = () => {
 
   // SCREEN 2: Course Modules & Lessons Detail (when activeCourse is true)
   return (
-    <div className="max-w-lg mx-auto bg-white min-h-[calc(100vh-64px)] animate-fade-in pb-28 md:pb-8 relative">
+    <div className="max-w-lg mx-auto bg-white min-h-[calc(100vh-64px)] animate-fade-in pb-36 md:pb-8 relative">
       
       {/* Course Banner */}
       <div className="w-full aspect-[16/9] relative overflow-hidden">
@@ -382,7 +382,7 @@ export const StudentDashboard = () => {
 
       {/* Sticky Bottom Button */}
       {lessons.length > 0 && (
-        <div className="fixed bottom-20 md:bottom-6 left-0 right-0 px-5 z-30 max-w-lg mx-auto">
+        <div className="fixed bottom-16 left-0 right-0 px-5 z-30 max-w-lg mx-auto">
           <button
             onClick={handleContinueStudy}
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#00A1FC] to-[#00DECC] text-white font-semibold text-[15px] shadow-lg hover:shadow-xl active:scale-[0.98] transition-all"
