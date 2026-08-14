@@ -57,6 +57,7 @@ def get_dashboard(current_user: User = Depends(get_current_user), db: Session = 
                 "video_url": l.video_url or "",
                 "lesson_type": l.lesson_type or "video",
                 "gallery_urls": l.gallery_urls or "",
+                "module": l.module or "Модуль 1",
                 "created_at": l.created_at.isoformat() if l.created_at else None
             })
     

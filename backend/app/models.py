@@ -26,6 +26,7 @@ class Lesson(Base):
     video_url = Column(Text, nullable=True)  # Text type for long video URLs and DataURLs
     lesson_type = Column(String, default="video", nullable=False)  # "video", "file", "gallery"
     gallery_urls = Column(Text, nullable=True)  # Text type for long image URLs and DataURLs
+    module = Column(String, default="Модуль 1", nullable=False) # Grouping module for lessons
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 

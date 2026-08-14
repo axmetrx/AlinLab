@@ -167,6 +167,7 @@ def get_admin_lessons(admin: User = Depends(get_admin_user), db: Session = Depen
                 "video_url": l.video_url or "",
                 "lesson_type": l.lesson_type or "video",
                 "gallery_urls": l.gallery_urls or "",
+                "module": l.module or "Модуль 1",
                 "created_at": l.created_at.isoformat() if l.created_at else None
             })
         return result
@@ -184,7 +185,8 @@ def create_lesson(lesson_in: LessonCreate, admin: User = Depends(get_admin_user)
             description=lesson_in.description or "",
             video_url=lesson_in.video_url or "",
             lesson_type=lesson_in.lesson_type or "video",
-            gallery_urls=lesson_in.gallery_urls or ""
+            gallery_urls=lesson_in.gallery_urls or "",
+            module=lesson_in.module or "Модуль 1"
         )
         db.add(lesson)
         db.commit()
@@ -208,6 +210,7 @@ def create_lesson(lesson_in: LessonCreate, admin: User = Depends(get_admin_user)
             "video_url": lesson.video_url or "",
             "lesson_type": lesson.lesson_type or "video",
             "gallery_urls": lesson.gallery_urls or "",
+            "module": lesson.module or "Модуль 1",
             "created_at": lesson.created_at.isoformat() if lesson.created_at else None
         }
     except Exception as e:
@@ -232,6 +235,8 @@ def update_lesson(lesson_id: int, lesson_in: LessonUpdate, admin: User = Depends
         lesson.lesson_type = lesson_in.lesson_type
     if lesson_in.gallery_urls is not None:
         lesson.gallery_urls = lesson_in.gallery_urls
+    if lesson_in.module is not None:
+        lesson.module = lesson_in.module
 
     db.commit()
     db.refresh(lesson)
@@ -242,6 +247,7 @@ def update_lesson(lesson_id: int, lesson_in: LessonUpdate, admin: User = Depends
         "video_url": lesson.video_url or "",
         "lesson_type": lesson.lesson_type or "video",
         "gallery_urls": lesson.gallery_urls or "",
+        "module": lesson.module or "Модуль 1",
         "created_at": lesson.created_at.isoformat() if lesson.created_at else None
     }
 

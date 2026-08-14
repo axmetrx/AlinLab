@@ -23,6 +23,7 @@ export const AdminDashboard = () => {
   const [lessonDesc, setLessonDesc] = useState('');
   const [lessonVideoUrl, setLessonVideoUrl] = useState('');
   const [lessonType, setLessonType] = useState('video'); // 'video' | 'file' | 'gallery'
+  const [lessonModule, setLessonModule] = useState('Модуль 1'); // Grouping module
   const [sourceType, setSourceType] = useState('url'); // 'url' | 'upload'
   const [galleryUrls, setGalleryUrls] = useState('');
   const [lessonSubmitLoading, setLessonSubmitLoading] = useState(false);
@@ -228,6 +229,7 @@ export const AdminDashboard = () => {
     setLessonDesc('');
     setLessonVideoUrl('');
     setLessonType('video');
+    setLessonModule('Модуль 1');
     setSourceType('url');
     setGalleryUrls('');
     setUploadedFileName('');
@@ -240,6 +242,7 @@ export const AdminDashboard = () => {
     setLessonDesc(lesson.description || '');
     setLessonVideoUrl(lesson.video_url || '');
     setLessonType(lesson.lesson_type || 'video');
+    setLessonModule(lesson.module || 'Модуль 1');
     setSourceType(lesson.video_url?.startsWith('/uploads') ? 'upload' : 'url');
     setGalleryUrls(lesson.gallery_urls || '');
     setUploadedFileName(lesson.video_url?.startsWith('/uploads') ? 'Загруженный файл' : '');
@@ -257,7 +260,8 @@ export const AdminDashboard = () => {
         description: lessonDesc,
         video_url: lessonVideoUrl,
         lesson_type: lessonType,
-        gallery_urls: galleryUrls
+        gallery_urls: galleryUrls,
+        module: lessonModule
       };
 
       if (editingLesson) {
@@ -799,6 +803,21 @@ export const AdminDashboard = () => {
                     <span>Загрузить файл с ПК</span>
                   </button>
                 </div>
+              </div>
+
+              {/* Module Field */}
+              <div>
+                <label className="block text-xs font-semibold text-deep mb-1.5 uppercase tracking-wider">
+                  Название модуля
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Например: Модуль 1. База съемки и монтажа"
+                  value={lessonModule}
+                  onChange={(e) => setLessonModule(e.target.value)}
+                  className="w-full px-4 py-3.5 rounded-2xl bg-white border border-cream-border text-deep text-sm placeholder-deep-light focus:outline-none focus:border-rose focus:ring-2 focus:ring-rose/20 transition-all"
+                />
               </div>
 
               {/* Title Field */}

@@ -11,6 +11,15 @@ export const StudentDashboard = () => {
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [activeCourse, setActiveCourse] = useState(false); // Controls landing screen vs module details
 
+  // Collapsible modules state
+  const [expandedModules, setExpandedModules] = useState({});
+
+  // Local storage completion tracking
+  const [completedLessons, setCompletedLessons] = useState(() => {
+    const saved = localStorage.getItem('completed_lessons');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const fetchDashboard = async () => {
     try {
       const res = await api.get('/student/dashboard');
@@ -26,6 +35,25 @@ export const StudentDashboard = () => {
     fetchDashboard();
   }, []);
 
+  const lessons = data?.lessons || [];
+
+  // Group lessons by module
+  const groupedLessons = lessons.reduce((acc, lesson) => {
+    const mod = lesson.module || 'Модуль 1';
+    if (!acc[mod]) acc[mod] = [];
+    acc[mod].push(lesson);
+    return acc;
+  }, {});
+
+  const moduleKeys = Object.keys(groupedLessons).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+  // Expand first module by default
+  useEffect(() => {
+    if (moduleKeys.length > 0 && Object.keys(expandedModules).length === 0) {
+      setExpandedModules({ [moduleKeys[0]]: true });
+    }
+  }, [data]);
+
   if (loading) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-4">
@@ -36,7 +64,6 @@ export const StudentDashboard = () => {
   }
 
   const access = data?.access || { is_active: false };
-  const lessons = data?.lessons || [];
 
   // ACCESS CLOSED
   if (!access.is_active) {
@@ -59,15 +86,32 @@ export const StudentDashboard = () => {
     );
   }
 
+  const markLessonComplete = (lessonId) => {
+    if (!completedLessons.includes(lessonId)) {
+      const next = [...completedLessons, lessonId];
+      setCompletedLessons(next);
+      localStorage.setItem('completed_lessons', JSON.stringify(next));
+    }
+  };
+
   // LESSON VIEW
   if (selectedLesson) {
-    return <LessonView lesson={selectedLesson} onBack={() => setSelectedLesson(null)} />;
+    return (
+      <LessonView 
+        lesson={selectedLesson} 
+        onBack={() => setSelectedLesson(null)} 
+        onComplete={() => {
+          markLessonComplete(selectedLesson.id);
+          setSelectedLesson(null);
+        }}
+      />
+    );
   }
 
   const getLessonIcon = (lType) => {
-    if (lType === 'file') return <FileText className="w-[18px] h-[18px] text-deep-muted" />;
-    if (lType === 'gallery') return <Images className="w-[18px] h-[18px] text-deep-muted" />;
-    return <Play className="w-[18px] h-[18px] text-deep-muted fill-deep-muted" />;
+    if (lType === 'file') return <FileText className="w-4 h-4 text-deep-muted" />;
+    if (lType === 'gallery') return <Images className="w-4 h-4 text-deep-muted" />;
+    return <Play className="w-4 h-4 text-deep-muted fill-deep-muted" />;
   };
 
   // Format access expiry
@@ -92,6 +136,23 @@ export const StudentDashboard = () => {
 
   const expiryDate = formatExpiryDate();
 
+  // Dynamic progress values
+  const completedCount = lessons.filter(l => completedLessons.includes(l.id)).length;
+  const progressPercent = lessons.length > 0 ? Math.round((completedCount / lessons.length) * 100) : 0;
+
+  const toggleModule = (modName) => {
+    setExpandedModules(prev => ({
+      ...prev,
+      [modName]: !prev[modName]
+    }));
+  };
+
+  const handleContinueStudy = () => {
+    if (lessons.length === 0) return;
+    const firstUncompleted = lessons.find(l => !completedLessons.includes(l.id));
+    setSelectedLesson(firstUncompleted || lessons[0]);
+  };
+
   // SCREEN 1: My Courses Landing (when activeCourse is false)
   if (!activeCourse) {
     return (
@@ -103,7 +164,6 @@ export const StudentDashboard = () => {
             alt="Okademalin Cover" 
             className="w-full h-full object-cover"
           />
-          {/* Logo avatar container overlapping the banner */}
           <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 z-10">
             <div className="w-20 h-20 rounded-full border-4 border-white bg-gradient-to-tr from-[#00DECC] to-[#00A1FC] flex items-center justify-center text-white font-bold text-xl shadow-md">
               Ok
@@ -131,7 +191,6 @@ export const StudentDashboard = () => {
             onClick={() => setActiveCourse(true)}
             className="w-full bg-white rounded-3xl border border-cream-border overflow-hidden shadow-soft hover:shadow-md active:scale-[0.99] transition-all text-left flex flex-col"
           >
-            {/* Card Thumbnail */}
             <div className="w-full aspect-[16/9]">
               <img 
                 src="/course_cover.jpg" 
@@ -139,7 +198,6 @@ export const StudentDashboard = () => {
                 className="w-full h-full object-cover"
               />
             </div>
-            {/* Card Content */}
             <div className="p-5 space-y-3">
               <div>
                 <h4 className="text-[16px] font-bold text-deep">Okademalin</h4>
@@ -151,11 +209,11 @@ export const StudentDashboard = () => {
               {/* Progress bar */}
               <div className="space-y-1.5 pt-1">
                 <div className="w-full h-1.5 bg-cream-dark rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-[#00A1FC] to-[#00DECC] rounded-full" style={{ width: '0%' }} />
+                  <div className="h-full bg-gradient-to-r from-[#00A1FC] to-[#00DECC] rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }} />
                 </div>
                 <div className="flex items-center justify-between text-[11px] text-deep-muted">
-                  <span>0/{lessons.length} уроков</span>
-                  <span>0%</span>
+                  <span>{completedCount}/{lessons.length} уроков</span>
+                  <span>{progressPercent}%</span>
                 </div>
               </div>
             </div>
@@ -181,7 +239,6 @@ export const StudentDashboard = () => {
           alt="Okademalin Cover" 
           className="w-full h-full object-cover"
         />
-        {/* Back navigation button overlayed */}
         <button
           onClick={() => setActiveCourse(false)}
           className="absolute top-4 left-4 p-2 bg-black/40 hover:bg-black/60 text-white backdrop-blur-md rounded-full transition-colors z-10"
@@ -212,11 +269,11 @@ export const StudentDashboard = () => {
       <div className="mx-5 bg-cream rounded-2xl p-4 space-y-3 border border-cream-border">
         {/* Progress bar */}
         <div className="flex items-center justify-between text-[13px]">
-          <span className="text-deep font-medium">0 из {lessons.length} уроков</span>
-          <span className="text-deep-muted font-semibold">0%</span>
+          <span className="text-deep font-medium">{completedCount} из {lessons.length} уроков</span>
+          <span className="text-deep-muted font-semibold">{progressPercent}%</span>
         </div>
         <div className="w-full h-2 bg-cream-dark rounded-full overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-[#00A1FC] to-[#00DECC] rounded-full transition-all duration-500" style={{ width: '0%' }} />
+          <div className="h-full bg-gradient-to-r from-[#00A1FC] to-[#00DECC] rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }} />
         </div>
 
         {/* Access info */}
@@ -233,7 +290,7 @@ export const StudentDashboard = () => {
         )}
       </div>
 
-      {/* Lessons List */}
+      {/* Lessons List - ReelsLab Collapsible Accordion Style */}
       <div className="mt-6">
         <div className="px-5 mb-3">
           <h3 className="text-[15px] font-bold text-deep">Программа обучения</h3>
@@ -245,36 +302,61 @@ export const StudentDashboard = () => {
             <p className="text-sm text-deep-muted">Уроки скоро появятся</p>
           </div>
         ) : (
-          <div className="divide-y divide-cream-border">
-            {lessons.map((lesson, index) => {
-              const lType = lesson.lesson_type || 'video';
+          <div className="px-5 space-y-3">
+            {moduleKeys.map((modName) => {
+              const modLessons = groupedLessons[modName];
+              const completedModLessons = modLessons.filter(l => completedLessons.includes(l.id)).length;
+              const isExpanded = expandedModules[modName];
 
               return (
-                <button
-                  key={lesson.id}
-                  onClick={() => setSelectedLesson(lesson)}
-                  className="w-full flex items-center px-5 py-3.5 hover:bg-cream-dark/40 active:bg-cream-dark transition-colors text-left group"
-                >
-                  {/* Lesson icon */}
-                  <div className="w-9 h-9 rounded-xl bg-cream flex items-center justify-center flex-shrink-0 mr-3.5 group-hover:bg-rose-light transition-colors">
-                    {getLessonIcon(lType)}
-                  </div>
-
-                  {/* Lesson info */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[14px] font-medium text-deep truncate leading-snug">
-                      {lesson.title}
-                    </p>
-                    {lesson.description && (
-                      <p className="text-[11px] text-deep-muted truncate mt-0.5">
-                        {lesson.description}
+                <div key={modName} className="border border-cream-border rounded-2xl bg-white overflow-hidden shadow-sm">
+                  {/* Collapsible Module Header */}
+                  <button
+                    onClick={() => toggleModule(modName)}
+                    className="w-full flex items-center justify-between px-4 py-3.5 bg-cream/35 hover:bg-cream/70 transition-colors text-left"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-[13.5px] font-bold text-deep truncate">{modName}</h4>
+                      <p className="text-[10px] text-deep-muted mt-0.5">
+                        {completedModLessons} из {modLessons.length} уроков
                       </p>
-                    )}
-                  </div>
+                    </div>
+                    <ChevronRight className={`w-4 h-4 text-deep-muted transition-transform duration-200 ml-2 ${isExpanded ? 'rotate-90' : ''}`} />
+                  </button>
 
-                  {/* Arrow */}
-                  <ChevronRight className="w-4.5 h-4.5 text-deep-light flex-shrink-0 ml-2 group-hover:text-rose transition-colors" />
-                </button>
+                  {/* Collapsible Module Lessons */}
+                  {isExpanded && (
+                    <div className="divide-y divide-cream-border/50 bg-white">
+                      {modLessons.map((lesson) => {
+                        const isCompleted = completedLessons.includes(lesson.id);
+                        const lType = lesson.lesson_type || 'video';
+
+                        return (
+                          <button
+                            key={lesson.id}
+                            onClick={() => setSelectedLesson(lesson)}
+                            className="w-full flex items-center px-4 py-3 hover:bg-cream-dark/20 active:bg-cream-dark/40 transition-colors text-left group"
+                          >
+                            <div className="w-7 h-7 rounded-lg bg-cream flex items-center justify-center flex-shrink-0 mr-3 group-hover:bg-rose-light transition-colors">
+                              {getLessonIcon(lType)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[12.5px] font-medium text-deep group-hover:text-rose transition-colors truncate">
+                                {lesson.title}
+                              </p>
+                            </div>
+                            {isCompleted && (
+                              <span className="w-[18px] h-[18px] rounded-full bg-emerald-500 text-white flex items-center justify-center flex-shrink-0 mr-2 shadow-sm">
+                                <Check className="w-3 h-3 stroke-[3.5]" />
+                              </span>
+                            )}
+                            <ChevronRight className="w-3.5 h-3.5 text-deep-light flex-shrink-0 group-hover:text-rose transition-transform group-hover:translate-x-0.5" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -285,7 +367,7 @@ export const StudentDashboard = () => {
       {lessons.length > 0 && (
         <div className="fixed bottom-20 md:bottom-6 left-0 right-0 px-5 z-30 max-w-lg mx-auto">
           <button
-            onClick={() => setSelectedLesson(lessons[0])}
+            onClick={handleContinueStudy}
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#00A1FC] to-[#00DECC] text-white font-semibold text-[15px] shadow-lg hover:shadow-xl active:scale-[0.98] transition-all"
           >
             Продолжить обучение

@@ -42,6 +42,7 @@ class LessonCreate(BaseModel):
     video_url: Optional[str] = None
     lesson_type: str = "video"  # "video", "file", "gallery"
     gallery_urls: Optional[str] = None
+    module: Optional[str] = "Модуль 1"
 
 class LessonUpdate(BaseModel):
     title: Optional[str] = None
@@ -49,6 +50,7 @@ class LessonUpdate(BaseModel):
     video_url: Optional[str] = None
     lesson_type: Optional[str] = None
     gallery_urls: Optional[str] = None
+    module: Optional[str] = None
 
 class LessonResponse(BaseModel):
     id: int
@@ -57,6 +59,7 @@ class LessonResponse(BaseModel):
     video_url: Optional[str]
     lesson_type: str = "video"
     gallery_urls: Optional[str] = None
+    module: str = "Модуль 1"
     created_at: datetime
 
     class Config:
