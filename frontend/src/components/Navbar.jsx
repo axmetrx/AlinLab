@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Sparkles, Bell, User as UserIcon, Shield, LogOut, BookOpen } from 'lucide-react';
+import { Sparkles, Bell, User as UserIcon, Shield, LogOut, BookOpen, Truck } from 'lucide-react';
 
 export const Navbar = ({ activeTab, setActiveTab }) => {
   const { user, logout, unreadCount } = useAuth();
@@ -20,7 +20,6 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
           <div>
             <span className="font-serif text-2xl font-semibold tracking-wide text-deep block leading-tight">
               Okademalin
-
             </span>
             <span className="text-[10px] tracking-widest text-deep-muted uppercase block font-medium">
               Академия Обучения
@@ -56,17 +55,30 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
               </button>
             </>
           ) : (
-            <button
-              onClick={() => setActiveTab('courses')}
-              className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 flex items-center space-x-2 ${
-                activeTab === 'courses'
-                  ? 'bg-white text-rose-dark shadow-sm font-semibold'
-                  : 'text-deep-muted hover:text-deep hover:bg-white/50'
-              }`}
-            >
-              <BookOpen className="w-4 h-4 text-rose" />
-              <span>Обучение</span>
-            </button>
+            <>
+              <button
+                onClick={() => setActiveTab('courses')}
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 flex items-center space-x-2 ${
+                  activeTab === 'courses'
+                    ? 'bg-white text-rose-dark shadow-sm font-semibold'
+                    : 'text-deep-muted hover:text-deep hover:bg-white/50'
+                }`}
+              >
+                <BookOpen className="w-4 h-4 text-rose" />
+                <span>Обучение</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('suppliers')}
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 flex items-center space-x-2 ${
+                  activeTab === 'suppliers'
+                    ? 'bg-white text-rose-dark shadow-sm font-semibold'
+                    : 'text-deep-muted hover:text-deep hover:bg-white/50'
+                }`}
+              >
+                <Truck className="w-4 h-4 text-rose" />
+                <span>Поставщики</span>
+              </button>
+            </>
           )}
 
           <button

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { BookOpen, Bell, User, Shield } from 'lucide-react';
+import { BookOpen, Bell, User, Shield, Truck } from 'lucide-react';
 
 export const BottomNav = ({ activeTab, setActiveTab }) => {
   const { user, unreadCount } = useAuth();
@@ -30,6 +30,16 @@ export const BottomNav = ({ activeTab, setActiveTab }) => {
         >
           <BookOpen className="w-5 h-5" />
           <span className="text-[11px]">Курсы</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('suppliers')}
+          className={`flex flex-col items-center space-y-1 py-1 px-3 rounded-2xl transition-colors ${
+            activeTab === 'suppliers' ? 'text-rose font-semibold' : 'text-deep-muted hover:text-deep'
+          }`}
+        >
+          <Truck className="w-5 h-5" />
+          <span className="text-[11px]">Поставщики</span>
         </button>
 
         <button

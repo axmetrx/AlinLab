@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/client';
-import { Shield, Users, BookOpen, Plus, Calendar, Clock, CheckCircle, XCircle, Trash2, Edit3, Sparkles, X, Link, Play, Upload, FileText } from 'lucide-react';
+import { Shield, Users, BookOpen, Plus, Calendar, Clock, CheckCircle, XCircle, Trash2, Edit3, Sparkles, X, Link, Play, Upload, FileText, Truck } from 'lucide-react';
 
 
 export const AdminDashboard = () => {
-  const [activeSubTab, setActiveSubTab] = useState('students'); // 'students' | 'lessons'
+  const [activeSubTab, setActiveSubTab] = useState('students'); // 'students' | 'lessons' | 'suppliers'
   
   // Students & Access State
   const [students, setStudents] = useState([]);
@@ -28,6 +28,20 @@ export const AdminDashboard = () => {
   const [lessonSubmitLoading, setLessonSubmitLoading] = useState(false);
   const [fileUploading, setFileUploading] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState('');
+
+  // Suppliers State
+  const [suppliers, setSuppliers] = useState([]);
+  const [suppliersLoading, setSuppliersLoading] = useState(true);
+  const [supplierModalOpen, setSupplierModalOpen] = useState(false);
+  const [editingSupplier, setEditingSupplier] = useState(null);
+  const [supplierName, setSupplierName] = useState('');
+  const [supplierDesc, setSupplierDesc] = useState('');
+  const [supplierPhotoUrl, setSupplierPhotoUrl] = useState('');
+  const [supplierContacts, setSupplierContacts] = useState('');
+  const [supplierCategory, setSupplierCategory] = useState('supplier'); // 'supplier' | 'illiquid'
+  const [supplierSubmitLoading, setSupplierSubmitLoading] = useState(false);
+  const [supplierFileUploading, setSupplierFileUploading] = useState(false);
+  const [supplierUploadedFileName, setSupplierUploadedFileName] = useState('');
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -73,6 +87,39 @@ export const AdminDashboard = () => {
     }
   };
 
+  const handleSupplierFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setSupplierFileUploading(true);
+    setSupplierUploadedFileName(file.name);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await api.post('/admin/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      setSupplierPhotoUrl(res.data.url);
+      setSupplierFileUploading(false);
+    } catch (uploadErr) {
+      console.warn('Supplier upload failed, using local file DataURL:', uploadErr);
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setSupplierPhotoUrl(event.target.result);
+        setSupplierFileUploading(false);
+      };
+      reader.onerror = () => {
+        alert('Не удалось прочесть файл с компьютера');
+        setSupplierFileUploading(false);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
 
 
 
@@ -100,9 +147,21 @@ export const AdminDashboard = () => {
     }
   };
 
+  const fetchSuppliers = async () => {
+    try {
+      const res = await api.get('/admin/suppliers');
+      setSuppliers(res.data);
+    } catch (err) {
+      console.error('Failed to fetch suppliers:', err);
+    } finally {
+      setSuppliersLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchStudents();
     fetchLessons();
+    fetchSuppliers();
   }, []);
 
   // --- GRANT / MODIFY ACCESS ---
@@ -226,6 +285,64 @@ export const AdminDashboard = () => {
     }
   };
 
+  const handleOpenSupplierModal = (supplier = null) => {
+    if (supplier) {
+      setEditingSupplier(supplier);
+      setSupplierName(supplier.name || '');
+      setSupplierDesc(supplier.description || '');
+      setSupplierPhotoUrl(supplier.photo_url || '');
+      setSupplierContacts(supplier.contacts || '');
+      setSupplierCategory(supplier.category || 'supplier');
+      setSupplierUploadedFileName(supplier.photo_url ? 'Текущее фото' : '');
+    } else {
+      setEditingSupplier(null);
+      setSupplierName('');
+      setSupplierDesc('');
+      setSupplierPhotoUrl('');
+      setSupplierContacts('');
+      setSupplierCategory('supplier');
+      setSupplierUploadedFileName('');
+    }
+    setSupplierModalOpen(true);
+  };
+
+  const handleSaveSupplier = async (e) => {
+    e.preventDefault();
+    setSupplierSubmitLoading(true);
+
+    try {
+      const payload = {
+        name: supplierName,
+        description: supplierDesc,
+        photo_url: supplierPhotoUrl,
+        contacts: supplierContacts,
+        category: supplierCategory
+      };
+
+      if (editingSupplier) {
+        await api.put(`/admin/suppliers/${editingSupplier.id}`, payload);
+      } else {
+        await api.post('/admin/suppliers', payload);
+      }
+      setSupplierModalOpen(false);
+      fetchSuppliers();
+    } catch (err) {
+      alert('Ошибка при сохранении партнёра: ' + (err.response?.data?.detail || err.message));
+    } finally {
+      setSupplierSubmitLoading(false);
+    }
+  };
+
+  const handleDeleteSupplier = async (supplierId) => {
+    if (!window.confirm('Вы уверены, что хотите удалить этого партнёра?')) return;
+    try {
+      await api.delete(`/admin/suppliers/${supplierId}`);
+      fetchSuppliers();
+    } catch (err) {
+      alert('Ошибка при удалении партнёра');
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 pb-24 md:pb-12 animate-fade-in space-y-8">
       
@@ -263,6 +380,16 @@ export const AdminDashboard = () => {
           >
             <BookOpen className="w-4 h-4" />
             <span>Уроки ({lessons.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('suppliers')}
+            className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-center space-x-2 ${
+              activeSubTab === 'suppliers' ? 'bg-rose text-white shadow-rose' : 'text-deep-muted hover:text-deep'
+            }`}
+          >
+            <Truck className="w-4 h-4" />
+            <span>Партнёры ({suppliers.length})</span>
           </button>
         </div>
       </div>
@@ -437,6 +564,95 @@ export const AdminDashboard = () => {
                       <span className="truncate">{lesson.video_url}</span>
                     </span>
                     <span>{new Date(lesson.created_at).toLocaleDateString('ru-RU')}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* SUB-TAB 3: SUPPLIERS/PARTNERS MANAGEMENT */}
+      {activeSubTab === 'suppliers' && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-serif text-2xl font-bold text-deep">
+                Поставщики и Неликвидчики
+              </h2>
+              <p className="text-xs text-deep-muted">Всего партнёров в базе: {suppliers.length}</p>
+            </div>
+            <button
+              onClick={() => handleOpenSupplierModal(null)}
+              className="px-5 py-3 rounded-2xl bg-gradient-to-r from-rose to-rose-hover text-white text-xs font-semibold shadow-rose hover:shadow-lg transition-all flex items-center space-x-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Добавить партнёра</span>
+            </button>
+          </div>
+
+          {suppliersLoading ? (
+            <div className="p-12 text-center text-sm text-deep-muted bg-white rounded-3xl">Загрузка партнёров...</div>
+          ) : suppliers.length === 0 ? (
+            <div className="p-12 text-center text-sm text-deep-muted bg-white rounded-3xl border border-cream-border">Список партнёров пока пуст. Добавьте первого партнёра!</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {suppliers.map((supplier) => (
+                <div key={supplier.id} className="bg-white border border-cream-border rounded-3xl p-6 shadow-soft flex flex-col justify-between space-y-4">
+                  <div>
+                    <div className="flex items-start justify-between">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-rose-dark bg-rose-light px-2.5 py-1 rounded-full mb-3 inline-block">
+                        {supplier.category === 'supplier' ? 'Поставщик' : 'Неликвидчик'}
+                      </span>
+                      <div className="flex items-center space-x-1">
+                        <button
+                          onClick={() => handleOpenSupplierModal(supplier)}
+                          className="p-2 rounded-xl text-deep-muted hover:text-rose hover:bg-rose-light transition-colors"
+                          title="Редактировать"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteSupplier(supplier.id)}
+                          className="p-2 rounded-xl text-deep-muted hover:text-red-500 hover:bg-red-50 transition-colors"
+                          title="Удалить"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-3.5 mb-3">
+                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-cream-dark flex-shrink-0">
+                        {supplier.photo_url ? (
+                          <img 
+                            src={supplier.photo_url} 
+                            alt={supplier.name} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center font-bold text-sm bg-gradient-to-tr from-[#00DECC] to-[#00A1FC] text-white">
+                            {supplier.name.charAt(0)}
+                          </div>
+                        )}
+                      </div>
+                      <h3 className="font-serif text-lg font-bold text-deep">
+                        {supplier.name}
+                      </h3>
+                    </div>
+
+                    {supplier.description && (
+                      <p className="text-xs text-deep-muted line-clamp-3 leading-relaxed mb-3">
+                        {supplier.description}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="pt-3 border-t border-cream-border flex items-center justify-between text-xs text-deep-muted">
+                    <span className="truncate max-w-[240px]">
+                      Контакты: <strong className="text-deep font-semibold">{supplier.contacts || 'Нет'}</strong>
+                    </span>
+                    <span>{new Date(supplier.created_at).toLocaleDateString('ru-RU')}</span>
                   </div>
                 </div>
               ))}
@@ -677,6 +893,120 @@ export const AdminDashboard = () => {
               </div>
             </form>
 
+          </div>
+        </div>
+      )}      {/* --- ADD/EDIT SUPPLIER MODAL --- */}
+      {supplierModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-deep/60 backdrop-blur-md p-4 animate-fade-in">
+          <div className="bg-cream rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-cream-border space-y-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-cream-border pb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-2xl bg-rose-light text-rose-dark flex items-center justify-center">
+                  <Truck className="w-5 h-5 animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="font-serif text-lg font-bold text-deep">
+                    {editingSupplier ? 'Редактировать партнёра' : 'Добавить партнёра'}
+                  </h3>
+                  <p className="text-xs text-deep-muted">Заполните данные о поставщике или неликвидчике</p>
+                </div>
+              </div>
+              <button onClick={() => setSupplierModalOpen(false)} className="p-1 rounded-full text-deep-muted hover:text-deep">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveSupplier} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-deep mb-1.5 uppercase tracking-wider">
+                  ФИО / Название компании
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Например: Иван Иванов или ООО Текстиль"
+                  value={supplierName}
+                  onChange={(e) => setSupplierName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-2xl bg-white border border-cream-border text-deep text-sm placeholder-deep-light focus:outline-none focus:border-rose focus:ring-2 focus:ring-rose/20 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-deep mb-1.5 uppercase tracking-wider">
+                  Категория партнёра
+                </label>
+                <select
+                  value={supplierCategory}
+                  onChange={(e) => setSupplierCategory(e.target.value)}
+                  className="w-full px-4 py-3 rounded-2xl bg-white border border-cream-border text-deep text-sm focus:outline-none focus:border-rose focus:ring-2 focus:ring-rose/20 transition-all"
+                >
+                  <option value="supplier">Поставщик</option>
+                  <option value="illiquid">Неликвидчик</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-deep mb-1.5 uppercase tracking-wider">
+                  Контактные данные (Ссылка на TG/WA или Номер телефона)
+                </label>
+                <input
+                  type="text"
+                  placeholder="https://t.me/username или +996..."
+                  value={supplierContacts}
+                  onChange={(e) => setSupplierContacts(e.target.value)}
+                  className="w-full px-4 py-3 rounded-2xl bg-white border border-cream-border text-deep text-sm placeholder-deep-light focus:outline-none focus:border-rose focus:ring-2 focus:ring-rose/20 transition-all"
+                />
+              </div>
+
+              {/* Photo Upload */}
+              <div>
+                <label className="block text-xs font-semibold text-deep mb-1.5 uppercase tracking-wider">
+                  Фотография партнёра
+                </label>
+                <div className="flex items-center space-x-3">
+                  <label className="flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl border border-dashed border-cream-border bg-white cursor-pointer hover:bg-cream transition-colors text-xs font-semibold text-deep-muted">
+                    <Upload className="w-4 h-4 text-rose" />
+                    <span>{supplierFileUploading ? 'Загрузка...' : 'Выбрать файл'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleSupplierFileUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  {supplierUploadedFileName && (
+                    <span className="text-xs text-deep-muted truncate max-w-[200px]">
+                      {supplierUploadedFileName}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-xs font-semibold text-deep mb-1.5 uppercase tracking-wider">
+                  Описание партнёра / Услуги / Пояснения
+                </label>
+                <textarea
+                  rows="3"
+                  placeholder="Какими товарами занимается, условия работы..."
+                  value={supplierDesc}
+                  onChange={(e) => setSupplierDesc(e.target.value)}
+                  className="w-full px-4 py-3 rounded-2xl bg-white border border-cream-border text-deep text-sm placeholder-deep-light focus:outline-none focus:border-rose focus:ring-2 focus:ring-rose/20 transition-all resize-none"
+                />
+              </div>
+
+              {/* Submit */}
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={supplierSubmitLoading || supplierFileUploading}
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose to-rose-hover text-white font-semibold text-sm shadow-rose hover:shadow-lg transition-all duration-200 disabled:opacity-50"
+                >
+                  {supplierSubmitLoading ? 'Сохранение...' : editingSupplier ? 'Сохранить изменения' : 'Добавить в базу'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

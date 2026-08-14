@@ -8,8 +8,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import User, Lesson, UserAccess, Notification
-from app.schemas import LessonCreate, LessonUpdate, LessonResponse, GrantAccessRequest, UserAccessResponse
+from app.models import User, Lesson, UserAccess, Notification, Supplier
+from app.schemas import LessonCreate, LessonUpdate, LessonResponse, GrantAccessRequest, UserAccessResponse, SupplierCreate, SupplierUpdate, SupplierResponse
 from app.auth import get_admin_user
 
 logger = logging.getLogger("okademalin.admin")
@@ -257,3 +257,58 @@ def delete_lesson(lesson_id: int, admin: User = Depends(get_admin_user), db: Ses
     db.delete(lesson)
     db.commit()
     return {"message": "Урок успешно удален"}
+
+
+# --- Supplier CRUD ---
+@router.get("/suppliers", response_model=List[SupplierResponse])
+def get_admin_suppliers(admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
+    return db.query(Supplier).order_by(Supplier.created_at.desc()).all()
+
+
+@router.post("/suppliers", response_model=SupplierResponse)
+def create_supplier(supplier_in: SupplierCreate, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
+    supplier = Supplier(
+        name=supplier_in.name,
+        description=supplier_in.description or "",
+        photo_url=supplier_in.photo_url or "",
+        contacts=supplier_in.contacts or "",
+        category=supplier_in.category or "supplier"
+    )
+    db.add(supplier)
+    db.commit()
+    db.refresh(supplier)
+    return supplier
+
+
+@router.put("/suppliers/{supplier_id}", response_model=SupplierResponse)
+def update_supplier(supplier_id: int, supplier_in: SupplierUpdate, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
+    supplier = db.query(Supplier).filter(Supplier.id == supplier_id).first()
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Поставщик не найден")
+
+    if supplier_in.name is not None:
+        supplier.name = supplier_in.name
+    if supplier_in.description is not None:
+        supplier.description = supplier_in.description
+    if supplier_in.photo_url is not None:
+        supplier.photo_url = supplier_in.photo_url
+    if supplier_in.contacts is not None:
+        supplier.contacts = supplier_in.contacts
+    if supplier_in.category is not None:
+        supplier.category = supplier_in.category
+
+    db.commit()
+    db.refresh(supplier)
+    return supplier
+
+
+@router.delete("/suppliers/{supplier_id}")
+def delete_supplier(supplier_id: int, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
+    supplier = db.query(Supplier).filter(Supplier.id == supplier_id).first()
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Поставщик не найден")
+    
+    db.delete(supplier)
+    db.commit()
+    return {"message": "Поставщик успешно удален"}
+

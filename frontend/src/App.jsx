@@ -4,6 +4,7 @@ import { Navbar } from './components/Navbar';
 import { BottomNav } from './components/BottomNav';
 import { AuthPage } from './pages/AuthPage';
 import { StudentDashboard } from './pages/StudentDashboard';
+import { SuppliersPage } from './pages/SuppliersPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { AdminDashboard } from './pages/AdminDashboard';
@@ -37,6 +38,7 @@ const MainLayout = () => {
       <main className="flex-1">
         {activeTab === 'admin' && user.role === 'admin' && <AdminDashboard />}
         {activeTab === 'courses' && <StudentDashboard />}
+        {activeTab === 'suppliers' && <SuppliersPage />}
         {activeTab === 'notifications' && <NotificationsPage />}
         {activeTab === 'profile' && <ProfilePage />}
       </main>

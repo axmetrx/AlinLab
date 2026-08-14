@@ -106,3 +106,31 @@ class NotificationResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# --- Supplier Schemas ---
+class SupplierCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    photo_url: Optional[str] = None
+    contacts: Optional[str] = None
+    category: str = "supplier"  # "supplier" or "illiquid"
+
+class SupplierUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    photo_url: Optional[str] = None
+    contacts: Optional[str] = None
+    category: Optional[str] = None
+
+class SupplierResponse(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    photo_url: Optional[str] = None
+    contacts: Optional[str] = None
+    category: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import User, Lesson, UserAccess, Notification
-from app.schemas import LessonResponse, NotificationResponse, AccessStatusResponse
+from app.models import User, Lesson, UserAccess, Notification, Supplier
+from app.schemas import LessonResponse, NotificationResponse, AccessStatusResponse, SupplierResponse
 from app.auth import get_current_user
 
 router = APIRouter(prefix="/api/student", tags=["Student"])
@@ -93,3 +93,13 @@ def mark_all_notifications_read(current_user: User = Depends(get_current_user), 
     db.query(Notification).filter(Notification.user_id == current_user.id, Notification.is_read == False).update({"is_read": True})
     db.commit()
     return {"message": "Все уведомления отмечены как прочитанные"}
+
+
+@router.get("/suppliers", response_model=List[SupplierResponse])
+def get_suppliers(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    is_active, _, _, _ = check_user_access(current_user.id, db)
+    if not is_active and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Доступ к материалам закрыт")
+    
+    return db.query(Supplier).order_by(Supplier.created_at.desc()).all()
+

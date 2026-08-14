@@ -54,3 +54,15 @@ class Notification(Base):
 
     user = relationship("User", back_populates="notifications")
 
+
+class Supplier(Base):
+    __tablename__ = "suppliers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    photo_url = Column(Text, nullable=True)
+    contacts = Column(Text, nullable=True)
+    category = Column(String, default="supplier", nullable=False)  # "supplier" or "illiquid"
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
