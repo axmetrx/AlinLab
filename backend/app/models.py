@@ -44,7 +44,7 @@ class UserAccess(Base):
 
     user = relationship("User", back_populates="accesses")
 
-
+ 
 class Notification(Base):
     __tablename__ = "notifications"
 

@@ -239,7 +239,7 @@ export const StudentDashboard = () => {
 
         {/* Branding Footer */}
         <div className="text-center py-6 text-[11px] text-deep-light">
-          Сделано на 1Study
+          Сделано axmetrx
         </div>
       </div>
     );
