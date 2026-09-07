@@ -11,8 +11,8 @@ def seed_data():
     Base.metadata.create_all(bind=engine)
     db: Session = SessionLocal()
     try:
-        # Check if admin already exists
-        admin = db.query(User).filter(User.email == "admin@alinlab.ru").first()
+        # Check if any admin already exists
+        admin = db.query(User).filter(User.role == "admin").first()
         if not admin:
             admin = User(
                 email="admin@alinlab.ru",

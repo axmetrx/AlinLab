@@ -23,7 +23,9 @@ export const ProfilePage = () => {
 
     try {
       const res = await api.put('/auth/profile', { full_name: fullName, email });
-      updateUser(res.data);
+      const userData = res.data.user || res.data;
+      const newToken = res.data.access_token;
+      updateUser(userData, newToken);
       setProfileMsg({ type: 'success', text: 'Данные профиля успешно обновлены!' });
     } catch (err) {
       setProfileMsg({ type: 'error', text: err.response?.data?.detail || 'Ошибка при обновлении профиля' });
@@ -38,10 +40,13 @@ export const ProfilePage = () => {
     setPwdLoading(true);
 
     try {
-      await api.put('/auth/change-password', {
+      const res = await api.put('/auth/change-password', {
         current_password: currentPassword,
         new_password: newPassword
       });
+      if (res.data?.access_token) {
+        updateUser(null, res.data.access_token);
+      }
       setPwdMsg({ type: 'success', text: 'Пароль успешно изменен!' });
       setCurrentPassword('');
       setNewPassword('');

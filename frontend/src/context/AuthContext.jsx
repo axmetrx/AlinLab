@@ -81,9 +81,15 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('alinlab_user');
   };
 
-  const updateUser = (updatedUser) => {
-    setUser(updatedUser);
-    localStorage.setItem('alinlab_user', JSON.stringify(updatedUser));
+  const updateUser = (updatedUser, newToken = null) => {
+    if (updatedUser) {
+      setUser(updatedUser);
+      localStorage.setItem('alinlab_user', JSON.stringify(updatedUser));
+    }
+    if (newToken) {
+      setToken(newToken);
+      localStorage.setItem('alinlab_token', newToken);
+    }
   };
 
   return (

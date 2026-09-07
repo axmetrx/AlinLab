@@ -41,7 +41,7 @@ def register(user_in: UserRegister, db: Session = Depends(get_db)):
     db.add(welcome_note)
     db.commit()
 
-    token = create_access_token({"sub": user.email})
+    token = create_access_token({"sub": str(user.id), "email": user.email})
     return {
         "access_token": token,
         "token_type": "bearer",
@@ -57,7 +57,7 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
             detail="Неверный email или пароль"
         )
     
-    token = create_access_token({"sub": user.email})
+    token = create_access_token({"sub": str(user.id), "email": user.email})
     return {
         "access_token": token,
         "token_type": "bearer",
@@ -68,10 +68,10 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
 def get_me(current_user: User = Depends(get_current_user)):
     return current_user
 
-@router.put("/profile", response_model=UserResponse)
+@router.put("/profile")
 def update_profile(profile_in: ProfileUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     if profile_in.email != current_user.email:
-        existing = db.query(User).filter(User.email == profile_in.email).first()
+        existing = db.query(User).filter(User.email == profile_in.email, User.id != current_user.id).first()
         if existing:
             raise HTTPException(status_code=400, detail="Этот email уже занят другим пользователем")
         current_user.email = profile_in.email
@@ -79,7 +79,19 @@ def update_profile(profile_in: ProfileUpdate, current_user: User = Depends(get_c
     current_user.full_name = profile_in.full_name
     db.commit()
     db.refresh(current_user)
-    return current_user
+
+    new_token = create_access_token({"sub": str(current_user.id), "email": current_user.email})
+    return {
+        "access_token": new_token,
+        "token_type": "bearer",
+        "user": {
+            "id": current_user.id,
+            "email": current_user.email,
+            "full_name": current_user.full_name,
+            "role": current_user.role,
+            "created_at": current_user.created_at.isoformat() if current_user.created_at else None
+        }
+    }
 
 @router.put("/change-password")
 def change_password(pwd_in: PasswordChange, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -88,4 +100,9 @@ def change_password(pwd_in: PasswordChange, current_user: User = Depends(get_cur
     
     current_user.hashed_password = hash_password(pwd_in.new_password)
     db.commit()
-    return {"message": "Пароль успешно изменен"}
+    
+    new_token = create_access_token({"sub": str(current_user.id), "email": current_user.email})
+    return {
+        "message": "Пароль успешно изменен",
+        "access_token": new_token
+    }

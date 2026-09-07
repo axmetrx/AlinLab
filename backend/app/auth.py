@@ -41,13 +41,19 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
+        sub = payload.get("sub")
+        if sub is None:
             raise credentials_exception
     except jwt.PyJWTError:
         raise credentials_exception
     
-    user = db.query(User).filter(User.email == email).first()
+    # Try by user ID first if sub is numeric, otherwise by email
+    user = None
+    if str(sub).isdigit():
+        user = db.query(User).filter(User.id == int(sub)).first()
+    if not user:
+        user = db.query(User).filter(User.email == str(sub)).first()
+
     if user is None:
         raise credentials_exception
     return user
