@@ -5,6 +5,7 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from app.database import get_db
 from app.models import User
@@ -52,7 +53,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     if str(sub).isdigit():
         user = db.query(User).filter(User.id == int(sub)).first()
     if not user:
-        user = db.query(User).filter(User.email == str(sub)).first()
+        user = db.query(User).filter(func.lower(User.email) == str(sub).strip().lower()).first()
 
     if user is None:
         raise credentials_exception

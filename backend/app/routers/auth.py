@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from app.database import get_db
 from app.models import User, UserAccess, Notification
@@ -10,7 +11,8 @@ router = APIRouter(prefix="/api/auth", tags=["Auth"])
 
 @router.post("/register", response_model=Token)
 def register(user_in: UserRegister, db: Session = Depends(get_db)):
-    existing_user = db.query(User).filter(User.email == user_in.email).first()
+    clean_email = str(user_in.email).strip().lower()
+    existing_user = db.query(User).filter(func.lower(User.email) == clean_email).first()
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -19,7 +21,7 @@ def register(user_in: UserRegister, db: Session = Depends(get_db)):
     
     hashed_pwd = hash_password(user_in.password)
     user = User(
-        email=user_in.email,
+        email=clean_email,
         hashed_password=hashed_pwd,
         full_name=user_in.full_name,
         role="student"
@@ -50,7 +52,8 @@ def register(user_in: UserRegister, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=Token)
 def login(credentials: UserLogin, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == credentials.email).first()
+    clean_email = str(credentials.email).strip().lower()
+    user = db.query(User).filter(func.lower(User.email) == clean_email).first()
     if not user or not verify_password(credentials.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -70,11 +73,12 @@ def get_me(current_user: User = Depends(get_current_user)):
 
 @router.put("/profile")
 def update_profile(profile_in: ProfileUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    if profile_in.email != current_user.email:
-        existing = db.query(User).filter(User.email == profile_in.email, User.id != current_user.id).first()
+    clean_email = str(profile_in.email).strip().lower()
+    if clean_email != current_user.email.lower():
+        existing = db.query(User).filter(func.lower(User.email) == clean_email, User.id != current_user.id).first()
         if existing:
             raise HTTPException(status_code=400, detail="Этот email уже занят другим пользователем")
-        current_user.email = profile_in.email
+        current_user.email = clean_email
 
     current_user.full_name = profile_in.full_name
     db.commit()
