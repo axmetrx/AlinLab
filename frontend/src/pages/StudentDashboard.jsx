@@ -8,8 +8,26 @@ export const StudentDashboard = () => {
   const { user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedLesson, setSelectedLesson] = useState(null);
-  const [activeCourse, setActiveCourse] = useState(false); // Controls landing screen vs module details
+  const coursesList = [
+    {
+      id: 'main',
+      title: 'Okademalin',
+      description: 'Учебный курс по развитию и освоению профессиональных навыков.',
+      detailDesc: 'Система, которая превращает обучение в удобный и эффективный процесс',
+      cover: '/course_cover.jpg',
+      tag: 'Курс',
+    },
+    {
+      id: 'suppliers',
+      title: 'Okademalin: Неликвид и Поставщики',
+      description: 'Пошаговый курс по работе с проверенными поставщиками и неликвидом.',
+      detailDesc: 'Практическое руководство по работе с фабриками, прямыми поставщиками и неликвидом',
+      cover: '/course_cover.jpg',
+      tag: 'Практика',
+    }
+  ];
+
+  const [selectedCourse, setSelectedCourse] = useState(null); // Controls landing screen vs module details
 
   // Collapsible modules state
   const [expandedModules, setExpandedModules] = useState({});
@@ -170,8 +188,8 @@ export const StudentDashboard = () => {
     setSelectedLesson(firstUncompleted || lessons[0]);
   };
 
-  // SCREEN 1: My Courses Landing (when activeCourse is false)
-  if (!activeCourse) {
+  // SCREEN 1: My Courses Landing (when selectedCourse is null)
+  if (!selectedCourse) {
     return (
       <div className="max-w-lg mx-auto bg-cream-card min-h-[calc(100vh-64px)] animate-fade-in pb-24 md:pb-8 flex flex-col">
         {/* Cover Photo */}
@@ -203,38 +221,46 @@ export const StudentDashboard = () => {
         <div className="px-5 mt-8 flex-1">
           <h3 className="text-[15px] font-bold text-deep mb-4 text-left">Мои курсы</h3>
 
-          {/* Clickable Course Card */}
-          <button
-            onClick={() => setActiveCourse(true)}
-            className="w-full bg-white rounded-3xl border border-cream-border overflow-hidden shadow-soft hover:shadow-md active:scale-[0.99] transition-all text-left flex flex-col"
-          >
-            <div className="w-full aspect-[16/9]">
-              <img 
-                src="/course_cover.jpg" 
-                alt="Okademalin Course" 
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="p-5 space-y-3">
-              <div>
-                <h4 className="text-[16px] font-bold text-deep">Okademalin</h4>
-                <p className="text-[12px] text-deep-muted mt-1 leading-snug">
-                  Учебный курс по развитию и освоению профессиональных навыков.
-                </p>
-              </div>
+          {/* Clickable Course Cards */}
+          <div className="space-y-4">
+            {coursesList.map((course) => (
+              <button
+                key={course.id}
+                onClick={() => setSelectedCourse(course)}
+                className="w-full bg-white rounded-3xl border border-cream-border overflow-hidden shadow-soft hover:shadow-md active:scale-[0.99] transition-all text-left flex flex-col"
+              >
+                <div className="w-full aspect-[16/9]">
+                  <img 
+                    src={course.cover} 
+                    alt={course.title} 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="p-5 space-y-3">
+                  <div>
+                    <h4 className="text-[16px] font-bold text-deep">{course.title}</h4>
+                    <p className="text-[12px] text-deep-muted mt-1 leading-snug">
+                      {course.description}
+                    </p>
+                  </div>
 
-              {/* Progress bar */}
-              <div className="space-y-1.5 pt-1">
-                <div className="w-full h-1.5 bg-cream-dark rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-[#00A1FC] to-[#00DECC] rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+                  {/* Progress bar */}
+                  <div className="space-y-1.5 pt-1">
+                    <div className="w-full h-1.5 bg-cream-dark rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-[#00A1FC] to-[#00DECC] rounded-full transition-all duration-500" 
+                        style={{ width: `${progressPercent}%` }} 
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] text-deep-muted">
+                      <span>{completedCount}/{lessons.length} уроков</span>
+                      <span>{progressPercent}%</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between text-[11px] text-deep-muted">
-                  <span>{completedCount}/{lessons.length} уроков</span>
-                  <span>{progressPercent}%</span>
-                </div>
-              </div>
-            </div>
-          </button>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Branding Footer */}
@@ -245,19 +271,19 @@ export const StudentDashboard = () => {
     );
   }
 
-  // SCREEN 2: Course Modules & Lessons Detail (when activeCourse is true)
+  // SCREEN 2: Course Modules & Lessons Detail (when selectedCourse is chosen)
   return (
     <div className="max-w-lg mx-auto bg-white min-h-[calc(100vh-64px)] animate-fade-in pb-36 md:pb-8 relative">
       
       {/* Course Banner */}
       <div className="w-full aspect-[16/9] relative overflow-hidden">
         <img 
-          src="/course_cover.jpg" 
-          alt="Okademalin Cover" 
+          src={selectedCourse.cover} 
+          alt={selectedCourse.title} 
           className="w-full h-full object-cover"
         />
         <button
-          onClick={() => setActiveCourse(false)}
+          onClick={() => setSelectedCourse(null)}
           className="absolute top-4 left-4 p-2 bg-black/40 hover:bg-black/60 text-white backdrop-blur-md rounded-full transition-colors z-10"
         >
           <ChevronLeft className="w-5 h-5" />
@@ -266,15 +292,15 @@ export const StudentDashboard = () => {
 
       {/* Course Info */}
       <div className="px-5 pt-4 pb-4">
-        <h1 className="text-lg font-bold text-deep">Okademalin</h1>
+        <h1 className="text-lg font-bold text-deep">{selectedCourse.title}</h1>
         <p className="text-[13px] text-deep-muted leading-snug mt-1">
-          Система, которая превращает обучение в удобный и эффективный процесс
+          {selectedCourse.detailDesc}
         </p>
 
         {/* Tags */}
         <div className="flex items-center space-x-2 mt-3">
           <span className="text-[11px] font-semibold text-rose-dark bg-rose-light px-3 py-1 rounded-full">
-            Курс
+            {selectedCourse.tag}
           </span>
           <span className="text-[11px] font-semibold text-rose-dark bg-rose-light px-3 py-1 rounded-full">
             Активный
