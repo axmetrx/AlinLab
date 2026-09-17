@@ -32,9 +32,13 @@ def ensure_postgres_db_exists(url: str):
     try:
         from urllib.parse import urlparse
         parsed = urlparse(url)
+        hostname = parsed.hostname or POSTGRES_HOST
+        # Only check/create database on local machine
+        if hostname not in ("localhost", "127.0.0.1", None):
+            return
+
         username = parsed.username or POSTGRES_USER
         password = parsed.password or POSTGRES_PASSWORD
-        hostname = parsed.hostname or POSTGRES_HOST
         port = parsed.port or int(POSTGRES_PORT)
         dbname = parsed.path.lstrip("/") or POSTGRES_DB
 
@@ -44,7 +48,8 @@ def ensure_postgres_db_exists(url: str):
             password=password,
             host=hostname,
             port=port,
-            client_encoding="UTF8"
+            client_encoding="UTF8",
+            connect_timeout=5
         )
         conn.autocommit = True
         cursor = conn.cursor()
@@ -95,7 +100,16 @@ def get_engine(url: str):
     ensure_postgres_db_exists(url)
 
     try:
-        engine = create_engine(url, pool_pre_ping=True)
+        connect_args = {}
+        if "postgresql" in url:
+            connect_args["connect_timeout"] = 10
+            
+        engine = create_engine(
+            url,
+            pool_pre_ping=True,
+            pool_recycle=300,
+            connect_args=connect_args
+        )
         with engine.connect() as conn:
             pass
         logger.info(f"Successfully connected to PostgreSQL database at {url}")
